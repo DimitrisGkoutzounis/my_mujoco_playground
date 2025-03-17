@@ -15,16 +15,16 @@
     <material name="gray" rgba="0.5 0.5 0.5 1"/>
     <mesh name="leap_mount" file="meshes/leap_mount.obj"/>
 
-    <mesh name="palm" file="../../../../../../mujoco_menagerie/leap_hand/assets/palm_right.obj"/>
-    <mesh name="base" file="../../../../../mujoco_menagerie/leap_hand/assets/base.obj"/>
-    <mesh name="proximal" file="../../../../../mujoco_menagerie/leap_hand/assets/proximal.obj"/>
-    <mesh name="medial" file="../../../../../mujoco_menagerie/leap_hand/assets/medial.obj"/>
-    <mesh name="distal" file="../../../../../mujoco_menagerie/leap_hand/assets/distal.obj"/>
-    <mesh name="tip" file="../../../../../mujoco_menagerie/leap_hand/assets/tip.obj"/>
-    <mesh name="thumb_base" file="../../../../../mujoco_menagerie/leap_hand/assets/thumb_base.obj"/>
-    <mesh name="thumb_proximal" file="../../../../../mujoco_menagerie/leap_hand/assets/thumb_proximal.obj"/>
-    <mesh name="thumb_distal" file="../../../../../mujoco_menagerie/leap_hand/assets/thumb_distal.obj"/>
-    <mesh name="thumb_tip" file="../../../../../mujoco_menagerie/leap_hand/assets/thumb_tip.obj"/>
+    <mesh name="palm" file="../../../../../external_deps/mujoco_menagerie/leap_hand/assets/palm_right.obj"/>
+    <mesh name="base" file="../../../../external_deps/mujoco_menagerie/leap_hand/assets/base.obj"/>
+    <mesh name="proximal" file="../../../../external_deps/mujoco_menagerie/leap_hand/assets/proximal.obj"/>
+    <mesh name="medial" file="../../../../external_deps/mujoco_menagerie/leap_hand/assets/medial.obj"/>
+    <mesh name="distal" file="../../../../external_deps/mujoco_menagerie/leap_hand/assets/distal.obj"/>
+    <mesh name="tip" file="../../../../external_deps/mujoco_menagerie/leap_hand/assets/tip.obj"/>
+    <mesh name="thumb_base" file="../../../../external_deps/mujoco_menagerie/leap_hand/assets/thumb_base.obj"/>
+    <mesh name="thumb_proximal" file="../../../../external_deps/mujoco_menagerie/leap_hand/assets/thumb_proximal.obj"/>
+    <mesh name="thumb_distal" file="../../../../external_deps/mujoco_menagerie/leap_hand/assets/thumb_distal.obj"/>
+    <mesh name="thumb_tip" file="../../../../external_deps/mujoco_menagerie/leap_hand/assets/thumb_tip.obj"/>
   </asset>
 
   <default>

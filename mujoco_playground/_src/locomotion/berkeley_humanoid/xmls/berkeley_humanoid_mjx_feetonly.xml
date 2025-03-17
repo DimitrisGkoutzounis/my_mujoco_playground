@@ -49,19 +49,19 @@
   <asset>
     <material name="metal" rgba=".3 .3 .3 1"/>
 
-    <mesh file="../../../../../mujoco_menagerie/berkeley_humanoid/assets/torso.stl"/>
-    <mesh file="../../../../../mujoco_menagerie/berkeley_humanoid/assets/ll_hr.stl"/>
-    <mesh file="../../../../../mujoco_menagerie/berkeley_humanoid/assets/ll_haa.stl"/>
-    <mesh file="../../../../../mujoco_menagerie/berkeley_humanoid/assets/ll_hfe.stl"/>
-    <mesh file="../../../../../mujoco_menagerie/berkeley_humanoid/assets/ll_kfe.stl"/>
-    <mesh file="../../../../../mujoco_menagerie/berkeley_humanoid/assets/ll_ffe.stl"/>
-    <mesh file="../../../../../mujoco_menagerie/berkeley_humanoid/assets/ll_faa.stl"/>
-    <mesh file="../../../../../mujoco_menagerie/berkeley_humanoid/assets/lr_hr.stl"/>
-    <mesh file="../../../../../mujoco_menagerie/berkeley_humanoid/assets/lr_haa.stl"/>
-    <mesh file="../../../../../mujoco_menagerie/berkeley_humanoid/assets/lr_hfe.stl"/>
-    <mesh file="../../../../../mujoco_menagerie/berkeley_humanoid/assets/lr_kfe.stl"/>
-    <mesh file="../../../../../mujoco_menagerie/berkeley_humanoid/assets/lr_ffe.stl"/>
-    <mesh file="../../../../../mujoco_menagerie/berkeley_humanoid/assets/lr_faa.stl"/>
+    <mesh file="../../../../external_deps/mujoco_menagerie/berkeley_humanoid/assets/torso.stl"/>
+    <mesh file="../../../../external_deps/mujoco_menagerie/berkeley_humanoid/assets/ll_hr.stl"/>
+    <mesh file="../../../../external_deps/mujoco_menagerie/berkeley_humanoid/assets/ll_haa.stl"/>
+    <mesh file="../../../../external_deps/mujoco_menagerie/berkeley_humanoid/assets/ll_hfe.stl"/>
+    <mesh file="../../../../external_deps/mujoco_menagerie/berkeley_humanoid/assets/ll_kfe.stl"/>
+    <mesh file="../../../../external_deps/mujoco_menagerie/berkeley_humanoid/assets/ll_ffe.stl"/>
+    <mesh file="../../../../external_deps/mujoco_menagerie/berkeley_humanoid/assets/ll_faa.stl"/>
+    <mesh file="../../../../external_deps/mujoco_menagerie/berkeley_humanoid/assets/lr_hr.stl"/>
+    <mesh file="../../../../external_deps/mujoco_menagerie/berkeley_humanoid/assets/lr_haa.stl"/>
+    <mesh file="../../../../external_deps/mujoco_menagerie/berkeley_humanoid/assets/lr_hfe.stl"/>
+    <mesh file="../../../../external_deps/mujoco_menagerie/berkeley_humanoid/assets/lr_kfe.stl"/>
+    <mesh file="../../../../external_deps/mujoco_menagerie/berkeley_humanoid/assets/lr_ffe.stl"/>
+    <mesh file="../../../../external_deps/mujoco_menagerie/berkeley_humanoid/assets/lr_faa.stl"/>
   </asset>
 
   <worldbody>
