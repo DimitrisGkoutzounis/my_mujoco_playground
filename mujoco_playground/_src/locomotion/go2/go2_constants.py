@@ -28,10 +28,10 @@ def task_to_xml(task_name: str) -> epath.Path:
 
 
 FEET_SITES = [
-    "FR",
-    "FL",
-    "RR",
-    "RL",
+    "FR_foot",
+    "FL_foot",
+    "RR_foot",
+    "RL_foot",
 ]
 
 FEET_GEOMS = [
@@ -43,7 +43,7 @@ FEET_GEOMS = [
 
 FEET_POS_SENSOR = [f"{site}_pos" for site in FEET_SITES]
 
-ROOT_BODY = "trunk"
+ROOT_BODY = "base"
 
 UPVECTOR_SENSOR = "upvector"
 GLOBAL_LINVEL_SENSOR = "global_linvel"

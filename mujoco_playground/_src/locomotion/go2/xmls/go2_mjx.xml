@@ -312,6 +312,15 @@
     <framepos objtype="site" objname="imu" name="global_position"/>
     <framelinvel objtype="site" objname="imu" name="global_linvel"/>
     <frameangvel objtype="site" objname="imu" name="global_angvel"/>
+    <velocimeter site="imu" name="local_linvel"/>
+    <framelinvel objtype="site" objname="FR_foot" name="FR_foot_global_linvel"/>
+    <framelinvel objtype="site" objname="FL_foot" name="FL_foot_global_linvel"/>
+    <framelinvel objtype="site" objname="RR_foot" name="RR_foot_global_linvel"/>
+    <framelinvel objtype="site" objname="RL_foot" name="RL_foot_global_linvel"/>
+    <framepos objtype="site" objname="FR_foot" name="FR_foot_pos" reftype="site" refname="imu"/>
+    <framepos objtype="site" objname="FL_foot" name="FL_foot_pos" reftype="site" refname="imu"/>
+    <framepos objtype="site" objname="RR_foot" name="RR_foot_pos" reftype="site" refname="imu"/>
+    <framepos objtype="site" objname="RL_foot" name="RL_foot_pos" reftype="site" refname="imu"/>
   </sensor>
 
 </mujoco>

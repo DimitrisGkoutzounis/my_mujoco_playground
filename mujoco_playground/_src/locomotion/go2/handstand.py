@@ -70,7 +70,7 @@ def default_config() -> config_dict.ConfigDict:
   )
 
 
-class Handstand(go2_base.go2Env):
+class Handstand(go2_base.Go2Env):
   """Handstand task for go2."""
 
   def __init__(
@@ -86,10 +86,10 @@ class Handstand(go2_base.go2Env):
     self._post_init()
 
   def _post_init(self) -> None:
-    self._init_q = jp.array(self._mj_model.keyframe("home").qpos)
+    self._init_q = jp.array(self._mj_model.keyframe("home1").qpos)
     self._handstand_q = jp.array(self._mj_model.keyframe("handstand").qpos)
     self._crouch_q = jp.array(self._mj_model.keyframe("pre_recovery").qpos)
-    self._default_pose = jp.array(self._mj_model.keyframe("home").qpos[7:])
+    self._default_pose = jp.array(self._mj_model.keyframe("home1").qpos[7:])
     self._handstand_pose = jp.array(
         self._mj_model.keyframe("handstand").qpos[7:]
     )
