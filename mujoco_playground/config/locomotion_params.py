@@ -248,5 +248,8 @@ def rsl_rl_config(env_name: str) -> config_dict.ConfigDict:
   if env_name == "Go1JoystickFlatTerrain":
     rl_config.algorithm.learning_rate = 3e-4
     rl_config.algorithm.schedule = "fixed"
+  elif env_name == "Go2JoystickFlatTerrain":
+    rl_config.algorithm.learning_rate = 3e-4
+    rl_config.algorithm.schedule = "fixed"
 
   return rl_config

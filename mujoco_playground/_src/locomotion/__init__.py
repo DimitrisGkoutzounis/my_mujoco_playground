@@ -70,6 +70,9 @@ _envs = {
     "Go2JoystickFlatTerrain": functools.partial(
         go2_joystick.Joystick, task="flat_terrain"
     ),
+    "Go2JoystickRoughTerrain": functools.partial(
+        go2_joystick.Joystick, task="rough_terrain"
+    ),
     "Go2Getup": go2_getup.Getup,
     "Go2Handstand": go2_handstand.Handstand,
     "Go2Footstand": go2_handstand.Footstand,
@@ -107,6 +110,7 @@ _cfgs = {
     "Go1Handstand": go1_handstand.default_config,
     "Go1Footstand": go1_handstand.default_config,
     "Go2JoystickFlatTerrain": go2_joystick.default_config,
+    "Go2JoystickRoughTerrain": go2_joystick.default_config,
     "Go2Getup": go2_getup.default_config,
     "Go2Handstand": go2_handstand.default_config,
     "Go2Footstand": go2_handstand.default_config,
@@ -135,6 +139,7 @@ _randomizer = {
     "Go1Handstand": go1_randomize.domain_randomize,
     "Go1Footstand": go1_randomize.domain_randomize,
     "Go2JoystickFlatTerrain": go2_randomize.domain_randomize,
+    "Go2JoystickRoughTerrain": go2_randomize.domain_randomize,
     "Go2Getup": go2_randomize.domain_randomize,
     "Go2Handstand": go2_randomize.domain_randomize,
     "Go2Footstand": go2_randomize.domain_randomize,
