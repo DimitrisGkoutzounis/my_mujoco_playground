@@ -76,9 +76,6 @@ os.makedirs(fig_output_path, exist_ok=True)  # Create the directory if it doesn'
 def progress(num_steps, metrics):
   clear_output(wait=True)
 
-  print("metric")
-  print(metrics.items())
-
   times.append(datetime.now())
   x_data.append(num_steps)
   y_data.append(metrics["eval/episode_reward"])
@@ -270,7 +267,9 @@ for i, ax in enumerate(axs.flat):
   ax.set_xlabel("time")
   ax.set_ylabel("height")
 plt.tight_layout()
-plt.show()
+plot_feet_name = os.path.join(fig_output_path, f"feet.png")
+plt.savefig(plot_feet_name)
+plt.close()  # Prevent excessive memory usage
 
 linvel_x = jp.array(linvel)[:, 0]
 linvel_y = jp.array(linvel)[:, 1]
@@ -302,3 +301,7 @@ for i, ax in enumerate(axes):
 labels = ["dx", "dy", "dyaw"]
 for i, ax in enumerate(axes):
   ax.set_ylabel(labels[i])
+
+plot_velocity = os.path.join(fig_output_path, f"velocity.png")
+plt.savefig(plot_velocity)
+plt.close()  # Prevent excessive memory usage
