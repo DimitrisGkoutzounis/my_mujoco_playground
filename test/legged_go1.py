@@ -75,6 +75,9 @@ os.makedirs(fig_output_path, exist_ok=True)  # Create the directory if it doesn'
 def progress(num_steps, metrics):
   clear_output(wait=True)
 
+  print("metric")
+  print(metrics.items())
+
   times.append(datetime.now())
   x_data.append(num_steps)
   y_data.append(metrics["eval/episode_reward"])

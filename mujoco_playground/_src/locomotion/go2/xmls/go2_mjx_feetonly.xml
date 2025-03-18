@@ -1,9 +1,10 @@
-<mujoco model="go2">
+<mujoco model="go2 feet only">
   <compiler angle="radian" meshdir="assets" autolimits="true"/>
 
-  <option cone="pyramidal" impratio="100" iterations="1" ls_iterations="5">
+  <option iterations="1" ls_iterations="5" timestep="0.004" integrator="Euler">
     <flag eulerdamp="disable"/>
   </option>
+
 
   <default>
     <default class="go2">
