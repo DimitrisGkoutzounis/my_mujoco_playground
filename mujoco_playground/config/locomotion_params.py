@@ -57,6 +57,17 @@ def brax_ppo_config(env_name: str) -> config_dict.ConfigDict:
         policy_obs_key="state",
         value_obs_key="privileged_state",
     )
+  
+  elif env_name in ("Go2JoystickFlatTerrain", "Go2JoystickRoughTerrain"):
+    rl_config.num_timesteps = 200_000_000
+    rl_config.num_evals = 10
+    rl_config.num_resets_per_eval = 1
+    rl_config.network_factory = config_dict.create(
+        policy_hidden_layer_sizes=(512, 256, 128),
+        value_hidden_layer_sizes=(512, 256, 128),
+        policy_obs_key="state",
+        value_obs_key="privileged_state",
+    )
 
   elif env_name in ("Go1Handstand", "Go1Footstand"):
     rl_config.num_timesteps = 100_000_000
@@ -80,6 +91,37 @@ def brax_ppo_config(env_name: str) -> config_dict.ConfigDict:
     )
 
   elif env_name == "Go1Getup":
+    rl_config.num_timesteps = 50_000_000
+    rl_config.num_evals = 5
+    rl_config.network_factory = config_dict.create(
+        policy_hidden_layer_sizes=(512, 256, 128),
+        value_hidden_layer_sizes=(512, 256, 128),
+        policy_obs_key="state",
+        value_obs_key="privileged_state",
+    )
+
+  elif env_name in ("Go2Handstand", "Go2Footstand"):
+    rl_config.num_timesteps = 100_000_000
+    rl_config.num_evals = 5
+    rl_config.network_factory = config_dict.create(
+        policy_hidden_layer_sizes=(512, 256, 128),
+        value_hidden_layer_sizes=(512, 256, 128),
+        policy_obs_key="state",
+        value_obs_key="privileged_state",
+    )
+
+  elif env_name == "Go2Backflip":
+    rl_config.num_timesteps = 200_000_000
+    rl_config.num_evals = 10
+    rl_config.discounting = 0.95
+    rl_config.network_factory = config_dict.create(
+        policy_hidden_layer_sizes=(512, 256, 128),
+        value_hidden_layer_sizes=(512, 256, 128),
+        policy_obs_key="state",
+        value_obs_key="privileged_state",
+    )
+
+  elif env_name == "Go2Getup":
     rl_config.num_timesteps = 50_000_000
     rl_config.num_evals = 5
     rl_config.network_factory = config_dict.create(
@@ -196,9 +238,11 @@ def rsl_rl_config(env_name: str) -> config_dict.ConfigDict:
 
   if env_name in (
       "Go1Getup",
+      "Go2Getup",
       "BerkeleyHumanoidJoystickFlatTerrain",
       "G1Joystick",
       "Go1JoystickFlatTerrain",
+      "Go2JoystickFlatTerrain",
   ):
     rl_config.max_iterations = 1000
   if env_name == "Go1JoystickFlatTerrain":

@@ -110,8 +110,8 @@ class Joystick(go2_base.Go2Env):
     self._post_init()
 
   def _post_init(self) -> None:
-    self._init_q = jp.array(self._mj_model.keyframe("home1").qpos)
-    self._default_pose = jp.array(self._mj_model.keyframe("home1").qpos[7:])
+    self._init_q = jp.array(self._mj_model.keyframe("home").qpos)
+    self._default_pose = jp.array(self._mj_model.keyframe("home").qpos[7:])
 
     # Note: First joint is freejoint.
     self._lowers, self._uppers = self.mj_model.jnt_range[1:].T
