@@ -109,6 +109,7 @@
       <geom class="collision" type="cylinder" quat="1 0 1 0" pos="0 0.04 0" size="0.058 0.125"/>
 
       <!-- Head and Lidar Collision Spheres -->
+      <site name="head" pos="0.285 0 0.01" rgba="1 0 0 1" size="0.02" group="5"/>
       <geom name="head_collision" type="sphere" size="0.05 0.045" pos="0.285 0 0.01" class="collision"/>
       <geom name="lidar_collision" type="sphere" size="0.043" pos="0.293 0 -0.06" class="collision"/>
       
@@ -308,6 +309,9 @@
     <jointvel joint="RR_calf_joint" name="knee_hind_right_vel"/>
     <gyro site="imu" name="gyro"/>
     <accelerometer site="imu" name="accelerometer"/>
+    <framezaxis objtype="site" objname="imu" name="upvector"/>
+    <framexaxis objtype="site" objname="imu" name="forwardvector"/>
+    <framepos objtype="site" objname="imu" name="position"/>
     <framequat objtype="site" objname="imu" name="orientation"/>
     <framepos objtype="site" objname="imu" name="global_position"/>
     <framelinvel objtype="site" objname="imu" name="global_linvel"/>
@@ -321,6 +325,7 @@
     <framepos objtype="site" objname="FL_foot" name="FL_foot_pos" reftype="site" refname="imu"/>
     <framepos objtype="site" objname="RR_foot" name="RR_foot_pos" reftype="site" refname="imu"/>
     <framepos objtype="site" objname="RL_foot" name="RL_foot_pos" reftype="site" refname="imu"/>
+    <framepos objtype="site" objname="head" name="head_pos"/>
   </sensor>
 
 </mujoco>
