@@ -36,8 +36,8 @@ class Gamepad:
 
   def __init__(
       self,
-      vendor_id=0x046D,
-      product_id=0xC219,
+      vendor_id=16700,#0x046D,
+      product_id=8449,#0xC219,
       vel_scale_x=0.4,
       vel_scale_y=0.4,
       vel_scale_rot=1.0,
@@ -60,14 +60,14 @@ class Gamepad:
 
   def _connect_device(self):
     try:
-      self._device = hid.device()
-      self._device.open(self._vendor_id, self._product_id)
-      self._device.set_nonblocking(True)
-      print(
-          "Connected to"
-          f" {self._device.get_manufacturer_string()} "
-          f"{self._device.get_product_string()}"
-      )
+      self._device = hid.Device(path=b'/dev/hidraw2') #
+      # self._device.open(self._vendor_id, self._product_id)
+      # self._device.set_nonblocking(True)
+      # print(
+          # "Connected to"
+          # f" {self._device.get_manufacturer_string()} "
+          # f"{self._device.get_product_string()}"
+      # )
       return True
     except (hid.HIDException, OSError) as e:
       print(f"Error connecting to device: {e}")
