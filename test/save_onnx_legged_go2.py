@@ -53,15 +53,11 @@ import flax.serialization
 import onnxruntime as ort
 import jax
 
-
 import tensorflow as tf
 import tf2onnx
 import onnxruntime as rt
 
-
-
-
-
+# Load environment and configuration
 registry.locomotion.ALL_ENVS
 
 env_name = 'Go2JoystickFlatTerrain'
@@ -87,13 +83,7 @@ times = [datetime.now()]
 fig_output_path = "./fig_go2"
 os.makedirs(fig_output_path, exist_ok=True)  # Create the directory if it doesn't exist
 
-
-
-import numpy as np
-import tensorflow as tf
-import tf2onnx
-
-
+# Define the function to export the trained PPO policy to ONNX format
 def export_ppo_to_onnx(
     params,
     obs_shape,
@@ -115,10 +105,12 @@ def export_ppo_to_onnx(
         activation: Activation function (e.g., tf.nn.swish, tf.nn.relu).
         opset: ONNX opset version (default: 11 for Isaac compatibility).
     """
+    # Normalize the observations
     mean = params[0].mean["state"]
     std = params[0].std["state"]
     mean_std = (tf.convert_to_tensor(mean), tf.convert_to_tensor(std))
 
+    # Define the MLP model for the policy
     class MLP(tf.keras.Model):
         def __init__(self, layer_sizes, activation=tf.nn.swish, mean_std=None):
             super().__init__()
@@ -133,6 +125,7 @@ def export_ppo_to_onnx(
         def call(self, inputs):
             if isinstance(inputs, list):
                 inputs = inputs[0]
+            # Normalize the inputs using mean and std
             inputs = (inputs - self.mean) / self.std
             logits = self.mlp_block(inputs)
             loc, _ = tf.split(logits, 2, axis=-1)
@@ -145,6 +138,7 @@ def export_ppo_to_onnx(
         for name, layer_params in jax_params.items():
             try:
                 tf_layer = tf_model.get_layer("mlp_block").get_layer(name=name)
+                # Transfer weights from JAX to TensorFlow model
                 tf_layer.set_weights([
                     np.array(layer_params["kernel"]),
                     np.array(layer_params["bias"]),
@@ -167,7 +161,7 @@ def export_ppo_to_onnx(
     )
     print(f"✅ ONNX policy saved to: {output_path}")
 
-
+# This function plots and logs training metrics
 def progress(num_steps, metrics):
   clear_output(wait=True)
 
@@ -188,6 +182,7 @@ def progress(num_steps, metrics):
   plt.close()  # Prevent excessive memory usage
   print(f"Progress plot saved: {plot_filename}")
 
+# Setup for training
 randomizer = registry.get_domain_randomizer(env_name)
 ppo_training_params = dict(ppo_params)
 network_factory = ppo_networks.make_ppo_networks
@@ -198,6 +193,7 @@ if "network_factory" in ppo_params:
       **ppo_params.network_factory
   )
 
+# Start the training process
 train_fn = functools.partial(
     ppo.train, **dict(ppo_training_params),
     network_factory=network_factory,
@@ -211,18 +207,15 @@ make_inference_fn, params, metrics = train_fn(
     wrap_env_fn=wrapper.wrap_for_brax_training,
 )
 
-
-
 print(f"time to jit: {times[1] - times[0]}")
 print(f"time to train: {times[-1] - times[1]}")
-
 
 # Extract from known params and env
 obs_shape = params[0].mean["state"].shape
 act_size = env.action_size
 output_path = "go2_policy.onnx"
 
-# Export
+# Export the policy to ONNX
 export_ppo_to_onnx(params, obs_shape, act_size, output_path)
 
 # Enable perturbation in the eval env.
@@ -241,18 +234,14 @@ jit_reset = jax.jit(eval_env.reset)
 jit_step = jax.jit(eval_env.step)
 jit_inference_fn = jax.jit(make_inference_fn(params, deterministic=True))
 
-
-
-
-
-#@title Rollout and Render
+# The following code collects trajectory data
+# @title Rollout and Render
 from mujoco_playground._src.gait import draw_joystick_command
 
 x_vel = 1.0  #@param {type: "number"}
 y_vel = 0.0  #@param {type: "number"}
 # yaw_vel = 3.14  #@param {type: "number"}
 yaw_vel = 0.4  #@param {type: "number"}
-
 
 def sample_pert(rng):
   rng, key1, key2 = jax.random.split(rng, 3)
@@ -267,7 +256,6 @@ def sample_pert(rng):
   state.info["pert_duration"] = duration_steps
   state.info["pert_duration_seconds"] = duration_seconds
   return rng
-
 
 rng = jax.random.PRNGKey(0)
 rollout = []
@@ -332,7 +320,7 @@ for i in range(env_cfg.episode_length):
       )
   )
 
-
+# The video is being saved
 render_every = 2
 fps = 1.0 / eval_env.dt / render_every
 traj = rollout[::render_every]
@@ -364,7 +352,8 @@ media.write_video(video_filename, frames, fps=fps)
 
 print(f"Video saved at: {video_filename}")
 
-#@title Plot each foot in a 2x2 grid.
+# Visualization of swing peaks
+# @title Plot each foot in a 2x2 grid.
 
 swing_peak = jp.array(swing_peak)
 names = ["FR", "FL", "RR", "RL"]
@@ -382,6 +371,7 @@ plot_feet_name = os.path.join(fig_output_path, f"feet.png")
 plt.savefig(plot_feet_name)
 plt.close()  # Prevent excessive memory usage
 
+# Velocity tracking visualization
 linvel_x = jp.array(linvel)[:, 0]
 linvel_y = jp.array(linvel)[:, 1]
 angvel_yaw = jp.array(angvel)[:, 2]
