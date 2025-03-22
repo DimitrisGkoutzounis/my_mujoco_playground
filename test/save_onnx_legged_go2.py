@@ -54,6 +54,12 @@ import onnxruntime as ort
 import jax
 
 
+import tensorflow as tf
+import tf2onnx
+import onnxruntime as rt
+
+
+
 
 
 registry.locomotion.ALL_ENVS
@@ -80,6 +86,86 @@ times = [datetime.now()]
 
 fig_output_path = "./fig_go2"
 os.makedirs(fig_output_path, exist_ok=True)  # Create the directory if it doesn't exist
+
+
+
+import numpy as np
+import tensorflow as tf
+import tf2onnx
+
+
+def export_ppo_to_onnx(
+    params,
+    obs_shape,
+    act_size,
+    output_path,
+    hidden_layer_sizes=[256, 256],
+    activation=tf.nn.swish,
+    opset=11,
+):
+    """
+    Exports a trained Brax PPO policy to ONNX format.
+
+    Args:
+        params: Tuple of (normalizer_params, policy_params) from Brax PPO.
+        obs_shape: Tuple, shape of the 'state' observation vector (e.g., (88,)).
+        act_size: Integer, size of action space.
+        output_path: Path to save the .onnx file.
+        hidden_layer_sizes: Hidden layer sizes of the policy network.
+        activation: Activation function (e.g., tf.nn.swish, tf.nn.relu).
+        opset: ONNX opset version (default: 11 for Isaac compatibility).
+    """
+    mean = params[0].mean["state"]
+    std = params[0].std["state"]
+    mean_std = (tf.convert_to_tensor(mean), tf.convert_to_tensor(std))
+
+    class MLP(tf.keras.Model):
+        def __init__(self, layer_sizes, activation=tf.nn.swish, mean_std=None):
+            super().__init__()
+            self.mean = tf.Variable(mean_std[0], trainable=False, dtype=tf.float32)
+            self.std = tf.Variable(mean_std[1], trainable=False, dtype=tf.float32)
+
+            self.mlp_block = tf.keras.Sequential(name="mlp_block")
+            for i, size in enumerate(layer_sizes[:-1]):
+                self.mlp_block.add(tf.keras.layers.Dense(size, activation=activation, name=f"hidden_{i}"))
+            self.mlp_block.add(tf.keras.layers.Dense(layer_sizes[-1], activation=None, name="output"))
+
+        def call(self, inputs):
+            if isinstance(inputs, list):
+                inputs = inputs[0]
+            inputs = (inputs - self.mean) / self.std
+            logits = self.mlp_block(inputs)
+            loc, _ = tf.split(logits, 2, axis=-1)
+            return tf.tanh(loc)
+
+    def make_policy_network(param_size, mean_std, hidden_layer_sizes):
+        return MLP(hidden_layer_sizes + [param_size], activation=activation, mean_std=mean_std)
+
+    def transfer_weights(jax_params, tf_model):
+        for name, layer_params in jax_params.items():
+            try:
+                tf_layer = tf_model.get_layer("mlp_block").get_layer(name=name)
+                tf_layer.set_weights([
+                    np.array(layer_params["kernel"]),
+                    np.array(layer_params["bias"]),
+                ])
+            except ValueError:
+                print(f"Warning: Layer {name} not found in TF model")
+
+    # Build model
+    tf_policy = make_policy_network(param_size=act_size * 2, mean_std=mean_std, hidden_layer_sizes=hidden_layer_sizes)
+    transfer_weights(params[1]["params"], tf_policy)
+
+    # Export to ONNX
+    input_spec = [tf.TensorSpec(shape=(1, obs_shape[0]), dtype=tf.float32, name="obs")]
+    tf_policy.output_names = ['continuous_actions']
+    model_proto, _ = tf2onnx.convert.from_keras(
+        tf_policy,
+        input_signature=input_spec,
+        opset=opset,
+        output_path=output_path
+    )
+    print(f"✅ ONNX policy saved to: {output_path}")
 
 
 def progress(num_steps, metrics):
@@ -124,8 +210,20 @@ make_inference_fn, params, metrics = train_fn(
     eval_env=registry.load(env_name, config=env_cfg),
     wrap_env_fn=wrapper.wrap_for_brax_training,
 )
+
+
+
 print(f"time to jit: {times[1] - times[0]}")
 print(f"time to train: {times[-1] - times[1]}")
+
+
+# Extract from known params and env
+obs_shape = params[0].mean["state"].shape
+act_size = env.action_size
+output_path = "go2_policy.onnx"
+
+# Export
+export_ppo_to_onnx(params, obs_shape, act_size, output_path)
 
 # Enable perturbation in the eval env.
 env_cfg = registry.get_default_config(env_name)
@@ -143,7 +241,9 @@ jit_reset = jax.jit(eval_env.reset)
 jit_step = jax.jit(eval_env.step)
 jit_inference_fn = jax.jit(make_inference_fn(params, deterministic=True))
 
-#vis
+
+
+
 
 #@title Rollout and Render
 from mujoco_playground._src.gait import draw_joystick_command
@@ -316,26 +416,3 @@ for i, ax in enumerate(axes):
 plot_velocity = os.path.join(fig_output_path, f"velocity.png")
 plt.savefig(plot_velocity)
 plt.close()  # Prevent excessive memory usage
-
-
-
-
-def export_to_onnx(make_inference_fn, params, state, filename="trained_policy.onnx"):
-    # Convert state.obs (which is a dict) into a JAX array
-    dummy_input = jp.zeros_like(jp.array(list(state.obs.values())))  
-
-    def inference_fn(obs):
-        act_rng = jax.random.PRNGKey(0)
-        ctrl, _ = make_inference_fn(params, deterministic=True)(obs, act_rng)
-        return ctrl
-
-    # JIT compile and export to ONNX
-    jax2onnx = jax.jit(inference_fn)
-    onnx_model = jax2onnx(dummy_input)
-
-    # Save the ONNX model
-    onnx.save_model(onnx_model, filename)
-    print(f"Model exported successfully to {filename}")
-
-
-export_to_onnx(make_inference_fn, params)

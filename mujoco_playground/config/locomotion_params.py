@@ -59,8 +59,8 @@ def brax_ppo_config(env_name: str) -> config_dict.ConfigDict:
     )
   
   elif env_name in ("Go2JoystickFlatTerrain", "Go2JoystickRoughTerrain"):
-    rl_config.num_timesteps = 200#_000_000
-    rl_config.num_evals = 10 # Change this back to 10
+    rl_config.num_timesteps = 20#_000_000
+    rl_config.num_evals = 2 # Change this back to 10
     rl_config.num_resets_per_eval = 1
     rl_config.network_factory = config_dict.create(
         policy_hidden_layer_sizes=(512, 256, 128),
