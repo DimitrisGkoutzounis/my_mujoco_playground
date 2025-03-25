@@ -31,6 +31,9 @@ import onnxruntime as rt
 from mujoco_playground._src.locomotion.go2 import go2_constants
 from mujoco_playground._src.locomotion.go2.base import get_assets
 
+# This is mine! Place holder to add arm+go2
+# from mujoco_playground._src.dynamic_events import new_go2_constants
+
 from Locomotion_Controller import Locomotion_Controller
 from Navigator import Navigator
 from NavigationPolicy import NavigationPolicy
