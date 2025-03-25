@@ -1,3 +1,6 @@
+# Hey, I modified Copyright 2025 DeepMind Technologies Limited
+# for an upcoming project regarding navigation policies for Go2 Unitree's quadrupedal robot.
+
 # Copyright 2025 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,18 +22,14 @@ import mujoco
 import mujoco.viewer as viewer
 import numpy as np
 import onnxruntime as rt
-# import pygame
-
-# pygame.init()
-# pygame.display.set_mode((1, 1))  # Ensures the video system is initialized
 
 from mujoco_playground._src.locomotion.go2 import go2_constants
 from mujoco_playground._src.locomotion.go2.base import get_assets
 
 _HERE = epath.Path(__file__).parent
-_ONNX_DIR = _HERE.parent / "onnx" # Modified this, one folder back before access .onnx
+_ONNX_DIR = _HERE.parent / "onnx" # Modified this (_HERE.parent), one folder back before access .onnx
 
-
+# Navigator Class: Decides nav. cmds - Generates random navigation commands
 class Navigator:
     def __init__(self, vel_scale_x=1.5, vel_scale_y=0.8, vel_scale_rot=2*np.pi):
         self.vel_scale_x=vel_scale_x
@@ -38,6 +37,7 @@ class Navigator:
         self.vel_scale_rot=vel_scale_rot
         self.command = np.zeros(3)
 
+    # Random x,y,rotation
     def generate_command(self):
         # Random vel
         self.vel_scale_x = np.around(np.random.uniform(-1, 1),3) # Random between 0-1, 3 dec.
@@ -50,7 +50,8 @@ class Navigator:
         self.command[2] = self.vel_scale_rot
 
         return self.command
-
+    
+    # Random x,y: no rotation
     def generate_command_norot(self):
         # Random vel
         self.vel_scale_x = np.around(np.random.uniform(-1, 1),3) # Random between 0-1, 3 dec.
@@ -64,7 +65,9 @@ class Navigator:
 
         return self.command
     
-class MyPolicy:
+# NavigationPolicy Class: Defines the navigation policy, TBD
+#  Until now: it has Navigator() which decides randomly the vel cmds
+class NavigationPolicy:
     def __init__(
         self,
         default_angles: np.ndarray,
@@ -78,7 +81,9 @@ class MyPolicy:
         self._n_substeps = n_substeps
         self._action_scale = action_scale
         self._counter = 0
-        
+        # Added this to decide the vel Cmds: in future, it will come from Navigation Policy
+        self.Navigator = Navigator()
+
     def get_action(self, model, data) -> np.ndarray:
         """Returns zero action (does nothing)."""
         return np.zeros_like(self._default_angles, dtype=np.float32)
@@ -94,12 +99,12 @@ class MyPolicy:
 
 
 
-class OnnxController:
-  """ONNX controller for the Go-1 robot."""
+class Locomotion_OnnxController:
+  """Low level - Locomotion ONNX controller for Go2 robot."""
 
   def __init__(
       self,
-      policy_path: str,
+      locomotion_policy_path: str,
       default_angles: np.ndarray,
       n_substeps: int,
       action_scale: float = 0.5,
@@ -109,7 +114,7 @@ class OnnxController:
   ):
     self._output_names = ["continuous_actions"]
     self._policy = rt.InferenceSession(
-        policy_path, providers=["CPUExecutionProvider"]
+        locomotion_policy_path, providers=["CPUExecutionProvider"]
     )
 
     self._action_scale = action_scale
@@ -186,8 +191,8 @@ def load_callback(model=None, data=None):
   n_substeps = int(round(ctrl_dt / sim_dt))
   model.opt.timestep = sim_dt
 
-  policy = OnnxController(
-      policy_path=(_ONNX_DIR / "go2_policy_galloping.onnx").as_posix(),
+  locomotion_policy = Locomotion_OnnxController(
+      locomotion_policy_path=(_ONNX_DIR / "go2_policy_galloping.onnx").as_posix(),
       default_angles=np.array(model.keyframe("home").qpos[7:]),
       n_substeps=n_substeps,
       action_scale=0.5,
@@ -196,14 +201,14 @@ def load_callback(model=None, data=None):
       vel_scale_rot=2 * np.pi,
   )
 
-  policy2 = MyPolicy(
-        default_angles=np.array(model.keyframe("home").qpos[7:]),
-        n_substeps=n_substeps,
-        action_scale=0.5,
-    )
+#   navigation_policy = NavigationPolicy(
+#         default_angles=np.array(model.keyframe("home").qpos[7:]),
+#         n_substeps=n_substeps,
+#         action_scale=0.5,
+#     )
 
 
-  mujoco.set_mjcb_control(policy.get_control)
+  mujoco.set_mjcb_control(locomotion_policy.get_control)
 
   return model, data
 
