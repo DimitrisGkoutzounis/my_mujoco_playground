@@ -20,7 +20,7 @@ from mujoco_playground.experimental.sim2sim.Dimitris.generator import ShapeGener
 _HERE = epath.Path(__file__).parent
 _ONNX_DIR = _HERE.parent / "onnx"
 
-def main(model=None, data=None, shape=None):
+def main(model=None, data=None):
   mujoco.set_mjcb_control(None)
 
   model = mujoco.MjModel.from_xml_path(
@@ -35,13 +35,7 @@ def main(model=None, data=None, shape=None):
   sim_dt = 0.004
   n_substeps = int(round(ctrl_dt / sim_dt))
   model.opt.timestep = sim_dt
-  
-  
-  
-  
-  
-  
-  
+
 
   locomotion_policy = LocomotionPolicy(
       policy_path=(_ONNX_DIR / "go2_policy_20250324_230734.onnx").as_posix(), #loads the policy
@@ -57,8 +51,11 @@ def main(model=None, data=None, shape=None):
   )
   
   
-  trajectory_policy = TrajectoryPolicy(shape_generator=shape,locomotion_policy=locomotion_policy)
-  
+  trajectory_policy = TrajectoryPolicy(
+    locomotion_policy=locomotion_policy,
+    n_substeps=n_substeps,
+    max_vel=5,  # Adjust as needed
+)
   # set high-level controller
   
   mujoco.set_mjcb_control(trajectory_policy.controller)       # High-level trajectory
@@ -70,15 +67,7 @@ def main(model=None, data=None, shape=None):
 
 
 if __name__ == "__main__":
-  
-  desired_shape  = input("Enter the desired shape: ")
-  print(f"Desired shape is {desired_shape}")
-  desired_size = input("Enter the desired size: ")
-  print(f"Desired size is {desired_size}")
-  
-  shape_generator = ShapeGenerator(desired_shape, float(desired_size))
+  print("Running with random velocity controller...")
 
-  
-  
   pygame.event.pump()
-  viewer.launch(loader=lambda: main(shape=shape_generator))
+  viewer.launch(loader=main)
