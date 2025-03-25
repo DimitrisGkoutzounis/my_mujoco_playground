@@ -19,45 +19,51 @@ import mujoco
 import mujoco.viewer as viewer
 import numpy as np
 import onnxruntime as rt
-import pygame
+# import pygame
 
-pygame.init()
-pygame.display.set_mode((1, 1))  # Ensures the video system is initialized
+# pygame.init()
+# pygame.display.set_mode((1, 1))  # Ensures the video system is initialized
 
 from mujoco_playground._src.locomotion.go2 import go2_constants
 from mujoco_playground._src.locomotion.go2.base import get_assets
 
 _HERE = epath.Path(__file__).parent
-_ONNX_DIR = _HERE / "onnx"
+_ONNX_DIR = _HERE.parent / "onnx" # Modified this, one folder back before access .onnx
 
 
-class KeyboardController:
-    def __init__(self, vel_scale_x=1.5, vel_scale_y=0.8, vel_scale_rot=2 * np.pi):
-        self.vel_scale_x = vel_scale_x
-        self.vel_scale_y = vel_scale_y
-        self.vel_scale_rot = vel_scale_rot
+class Navigator:
+    def __init__(self, vel_scale_x=1.5, vel_scale_y=0.8, vel_scale_rot=2*np.pi):
+        self.vel_scale_x=vel_scale_x
+        self.vel_scale_y=vel_scale_y
+        self.vel_scale_rot=vel_scale_rot
         self.command = np.zeros(3)
 
-    def get_command(self):
-        keys = pygame.key.get_pressed()
-        self.command = np.zeros(3)  # Reset command
-
-        if keys[pygame.K_UP]:  # Forward
-            self.command[0] = self.vel_scale_x
-        if keys[pygame.K_s]:  # Backward
-            self.command[0] = -self.vel_scale_x
-        if keys[pygame.K_a]:  # Left
-            self.command[1] = self.vel_scale_y
-        if keys[pygame.K_d]:  # Right
-            self.command[1] = -self.vel_scale_y
-        if keys[pygame.K_q]:  # Rotate left
-            self.command[2] = self.vel_scale_rot
-        if keys[pygame.K_e]:  # Rotate right
-            self.command[2] = -self.vel_scale_rot
+    def generate_command(self):
+        # Random vel
+        self.vel_scale_x = np.around(np.random.uniform(-1, 1),3) # Random between 0-1, 3 dec.
+        self.vel_scale_y = np.around(np.random.uniform(-1, 1),3) # Random between 0-1, 3 dec.
+        self.vel_scale_rot = np.around(np.random.uniform(-1, 1)*2*np.pi,3) # Random between 0-2pi, 3 dec
+        # Pass it to command
+        self.command = np.zeros(3)
+        self.command[0] = self.vel_scale_x
+        self.command[1] = self.vel_scale_y
+        self.command[2] = self.vel_scale_rot
 
         return self.command
 
+    def generate_command_norot(self):
+        # Random vel
+        self.vel_scale_x = np.around(np.random.uniform(-1, 1),3) # Random between 0-1, 3 dec.
+        self.vel_scale_y = np.around(np.random.uniform(-1, 1),3) # Random between 0-1, 3 dec.
+        self.vel_scale_rot = 0.0
+        # Pass it to command
+        self.command = np.zeros(3)
+        self.command[0] = self.vel_scale_x
+        self.command[1] = self.vel_scale_y
+        self.command[2] = self.vel_scale_rot
 
+        return self.command
+    
 class MyPolicy:
     def __init__(
         self,
@@ -113,7 +119,7 @@ class OnnxController:
     self._counter = 0
     self._n_substeps = n_substeps
 
-    self._joystick = KeyboardController(
+    self._joystick = Navigator(
         vel_scale_x=vel_scale_x,
         vel_scale_y=vel_scale_y,
         vel_scale_rot=vel_scale_rot,
@@ -136,7 +142,7 @@ class OnnxController:
         joint_angles,
         joint_velocities,
         self._last_action,
-        self._joystick.get_command(),
+        self._joystick.generate_command_norot(),
     ])
     return obs.astype(np.float32)
 
@@ -164,8 +170,9 @@ class OnnxController:
 
 
 def load_callback(model=None, data=None):
+  # Set no mujoco control - default callback
   mujoco.set_mjcb_control(None)
-
+  # Load 
   model = mujoco.MjModel.from_xml_path(
       go2_constants.FEET_ONLY_FLAT_TERRAIN_XML.as_posix(),
       assets=get_assets(),
@@ -180,7 +187,7 @@ def load_callback(model=None, data=None):
   model.opt.timestep = sim_dt
 
   policy = OnnxController(
-      policy_path=(_ONNX_DIR / "go2_policy_20250324_121249.onnx").as_posix(),
+      policy_path=(_ONNX_DIR / "go2_policy_galloping.onnx").as_posix(),
       default_angles=np.array(model.keyframe("home").qpos[7:]),
       n_substeps=n_substeps,
       action_scale=0.5,
@@ -202,5 +209,5 @@ def load_callback(model=None, data=None):
 
 
 if __name__ == "__main__":
-  pygame.event.pump()
+#   pygame.event.pump()
   viewer.launch(loader=load_callback)
