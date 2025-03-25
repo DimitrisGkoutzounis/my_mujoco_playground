@@ -1,0 +1,27 @@
+
+# Check your keyboard number
+import hid
+
+for dev in hid.enumerate():
+    print(dev)
+    
+# Modify .py
+   Replace device -> Device
+   
+      vendor_id=16700,#0x046D,
+      product_id=8449,#0xC219,
+      
+      
+       self._device = hid.Device(path=b'/dev/hidraw2') #
+      # self._device.open(self._vendor_id, self._product_id)
+      # self._device.set_nonblocking(True)
+      # print(
+          # "Connected to"
+          # f" {self._device.get_manufacturer_string()} "
+          # f"{self._device.get_product_string()}"
+      # )
+      
+# Change permission
+
+sudo chmod 666 /dev/hidraw2
+
