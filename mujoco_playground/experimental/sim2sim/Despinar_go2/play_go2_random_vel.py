@@ -34,59 +34,80 @@ from mujoco_playground._src.locomotion.go2.base import get_assets
 from Locomotion_Controller import Locomotion_Controller
 from Navigator import Navigator
 from NavigationPolicy import NavigationPolicy
+from TopLevelController import TopLevelController
 
 _HERE = epath.Path(__file__).parent
 _ONNX_DIR = _HERE.parent / "onnx" # Modified this (_HERE.parent), one folder back before access .onnx
 
-def main_callback(model=None, data=None):
+def main_function(model=None, data=None):
+
+    # Set no mujoco control - default callback
+    mujoco.set_mjcb_control(None)
+    # Load 
+    model = mujoco.MjModel.from_xml_path(
+        go2_constants.FEET_ONLY_FLAT_TERRAIN_XML.as_posix(),
+        assets=get_assets(),
+    )
+    # Mujoco data
+    data = mujoco.MjData(model)
+    # Mujoco reset
+    mujoco.mj_resetDataKeyframe(model, data, 0)
+    # Define params
+    ctrl_dt = 0.02
+    sim_dt = 0.004
+    n_substeps = int(round(ctrl_dt / sim_dt))
+    model.opt.timestep = sim_dt
+
+    # Navigator
+    nav = Navigator()
+
+    # Locomotion Controller from Trained Onnx Policy
+    locomotion_policy = Locomotion_Controller(
+        locomotion_policy_path=(_ONNX_DIR / "go2_policy_galloping.onnx").as_posix(),
+        default_angles=np.array(model.keyframe("home").qpos[7:]),
+        n_substeps=n_substeps,
+        action_scale=0.5,
+        vel_scale_x=1.5,
+        vel_scale_y=0.8,
+        vel_scale_rot=2 * np.pi,
+        locomotion_cmd=np.zeros(3) # Define which Navigator-Boss the locomotion cotroller will have.
+    )
+
+
+
+    # Future definition of Navigation Policy
+    navigation_policy = NavigationPolicy(
+            default_angles=np.array(model.keyframe("home").qpos[7:]),
+            n_substeps=n_substeps,
+            action_scale=0.5,
+        )
   
-  # Set no mujoco control - default callback
-  mujoco.set_mjcb_control(None)
-  # Load 
-  model = mujoco.MjModel.from_xml_path(
-      go2_constants.FEET_ONLY_FLAT_TERRAIN_XML.as_posix(),
-      assets=get_assets(),
-  )
-  # Mujoco data
-  data = mujoco.MjData(model)
-  # Mujoco reset
-  mujoco.mj_resetDataKeyframe(model, data, 0)
-  # Define params
-  ctrl_dt = 0.02
-  sim_dt = 0.004
-  n_substeps = int(round(ctrl_dt / sim_dt))
-  model.opt.timestep = sim_dt
+    # top_controller = TopLevelController(locomotionController=locomotion_policy, navigationPolicy=navigation_policy)
 
-  # Navigator
-  nav = Navigator()
+    t_last_cmd = data.time
+    dt_new_cmd = 0.5 #0.5sec - update command delta t
 
-  # Locomotion Controller from Trained Onnx Policy
-  locomotion_policy = Locomotion_Controller(
-      locomotion_policy_path=(_ONNX_DIR / "go2_policy_galloping.onnx").as_posix(),
-      default_angles=np.array(model.keyframe("home").qpos[7:]),
-      n_substeps=n_substeps,
-      action_scale=0.5,
-      vel_scale_x=1.5,
-      vel_scale_y=0.8,
-      vel_scale_rot=2 * np.pi,
-      locomotion_cmd=np.zeros(3) # Define which Navigator-Boss the locomotion cotroller will have.
-  )
+    def control_callback(model, data):
+        nonlocal t_last_cmd
 
-# Future definition of Navigation Policy
-#   navigation_policy = NavigationPolicy(
-#         default_angles=np.array(model.keyframe("home").qpos[7:]),
-#         n_substeps=n_substeps,
-#         action_scale=0.5,
-#     )
-  # Update locomotion cmd, from whatever(in random) the Navigator decides
-  locomotion_policy.update_locomotion_cmd(nav.generate_command_norot()) 
-  # Execute the locomotion cmd
-  mujoco.set_mjcb_control(locomotion_policy.exec_locomotion_control)
+        # Set new vel cmd per dt_new_cmd
+        if (data.time - t_last_cmd) >= dt_new_cmd:
+            print("New cmd at:",data.time)
+            # Update locomotion cmd, from whatever(in random) the Navigator decides
+            locomotion_policy.update_locomotion_cmd(nav.generate_command_norot()) 
+            # Reset  t_last_cmd 
+            t_last_cmd = data.time
 
-  return model, data
+        # Execute the locomotion cmd
+        locomotion_policy.exec_locomotion_control(model=model, data=data)
+
+    # Set the main controll callback
+    mujoco.set_mjcb_control(control_callback)
+
+    return model, data
 
 
 
 if __name__ == "__main__":
   
-  viewer.launch(loader=main_callback)
+  viewer.launch(loader=main_function)

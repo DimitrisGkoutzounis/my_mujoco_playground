@@ -33,5 +33,5 @@ class Navigator:
         self.command[0] = self.vel_scale_x
         self.command[1] = self.vel_scale_y
         self.command[2] = self.vel_scale_rot
-
+        print("From generate_command_norot",self.command)
         return self.command

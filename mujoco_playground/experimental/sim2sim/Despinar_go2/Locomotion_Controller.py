@@ -56,6 +56,8 @@ class Locomotion_Controller:
         self._last_action,
         self._joystick,
     ])
+    print("From get_obs_locomotion",self._joystick)
+
     return obs_locomotion.astype(np.float32)
 
   def exec_locomotion_control(self, model: mujoco.MjModel, data: mujoco.MjData) -> None:

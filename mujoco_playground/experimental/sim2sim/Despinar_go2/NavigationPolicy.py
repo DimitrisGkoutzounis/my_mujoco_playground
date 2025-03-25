@@ -9,7 +9,7 @@ class NavigationPolicy:
     def __init__(
         self,
         default_angles: np.ndarray,
-        n_substeps: int,
+        n_substeps: int = 0,
         action_scale: float = 0.5,
         vel_scale_x: float = 1.5,
         vel_scale_y: float = 0.8,
