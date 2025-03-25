@@ -150,17 +150,7 @@ class OnnxController:
       self._last_action = onnx_pred.copy()
       data.ctrl[:] = onnx_pred * self._action_scale + self._default_angles
 
-  def custom_obs(self, model, data) -> np.ndarray:
-     
-        print(data.sensor("local_linvel").data)
-      
-  def custom_control(self, model: mujoco.MjModel, data:mujoco.MjData) -> None:
-     self._counter += 1
 
-     if self._counter % self._n_substeps == 0:
-
-        print(f"Simulation time: {data.time:.4f}")
-       
 
 
 def load_callback(model=None, data=None):
@@ -180,19 +170,13 @@ def load_callback(model=None, data=None):
   model.opt.timestep = sim_dt
 
   policy = OnnxController(
-      policy_path=(_ONNX_DIR / "go2_policy_20250324_121249.onnx").as_posix(),
+      policy_path=(_ONNX_DIR / "go2_policy_20250324_230734.onnx").as_posix(),
       default_angles=np.array(model.keyframe("home").qpos[7:]),
       n_substeps=n_substeps,
       action_scale=0.5,
       vel_scale_x=1.5,
       vel_scale_y=0.8,
       vel_scale_rot=2 * np.pi,
-  )
-
-  policy2 = MyPolicy(
-        default_angles=np.array(model.keyframe("home").qpos[7:]),
-        n_substeps=n_substeps,
-        action_scale=0.5,
     )
 
 
