@@ -20,7 +20,7 @@ class NavigationPolicy:
         self._action_scale = action_scale
         self._counter = 0
         # Added this to decide the vel Cmds: in future, it will come from Navigation Policy
-        self.Navigator = Navigator()
+        self.Navigator_ = Navigator()
 
     def get_action(self, model, data) -> np.ndarray:
         """Returns zero action (does nothing)."""

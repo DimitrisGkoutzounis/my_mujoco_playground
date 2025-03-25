@@ -58,11 +58,11 @@ def main_function(model=None, data=None):
     n_substeps = int(round(ctrl_dt / sim_dt))
     model.opt.timestep = sim_dt
 
-    # Navigator
-    nav = Navigator()
 
+    # Top Level Controller - Controls EVERYTHING
+    top_controller = TopLevelController()
     # Locomotion Controller from Trained Onnx Policy
-    locomotion_policy = Locomotion_Controller(
+    top_controller.locomotion_ctrl_ = Locomotion_Controller(
         locomotion_policy_path=(_ONNX_DIR / "go2_policy_galloping.onnx").as_posix(),
         default_angles=np.array(model.keyframe("home").qpos[7:]),
         n_substeps=n_substeps,
@@ -72,37 +72,18 @@ def main_function(model=None, data=None):
         vel_scale_rot=2 * np.pi,
         locomotion_cmd=np.zeros(3) # Define which Navigator-Boss the locomotion cotroller will have.
     )
-
-
-
-    # Future definition of Navigation Policy
-    navigation_policy = NavigationPolicy(
-            default_angles=np.array(model.keyframe("home").qpos[7:]),
-            n_substeps=n_substeps,
+    # TBD: Future definition of Navigation Policy
+    top_controller.navigation_policy_ = NavigationPolicy(
+            default_angles=np.array(model.keyframe("home").qpos[7:]), #TBD: FIX THOSE DEFAULT ANGELS
+            n_substeps=n_substeps,  #TBD: FIX THOSE DEFAULT N_SUBSTEPS
             action_scale=0.5,
         )
-  
-    # top_controller = TopLevelController(locomotionController=locomotion_policy, navigationPolicy=navigation_policy)
+    # Init time variables
+    top_controller.t_last_cmd = data.time
+    top_controller.dt_new_cmd = 1 #0.5sec - update vel command per delta t
 
-    t_last_cmd = data.time
-    dt_new_cmd = 0.5 #0.5sec - update command delta t
-
-    def control_callback(model, data):
-        nonlocal t_last_cmd
-
-        # Set new vel cmd per dt_new_cmd
-        if (data.time - t_last_cmd) >= dt_new_cmd:
-            print("New cmd at:",data.time)
-            # Update locomotion cmd, from whatever(in random) the Navigator decides
-            locomotion_policy.update_locomotion_cmd(nav.generate_command_norot()) 
-            # Reset  t_last_cmd 
-            t_last_cmd = data.time
-
-        # Execute the locomotion cmd
-        locomotion_policy.exec_locomotion_control(model=model, data=data)
-
-    # Set the main controll callback
-    mujoco.set_mjcb_control(control_callback)
+    # Set the main controll callback from Top Controller
+    mujoco.set_mjcb_control(top_controller.control_callback)
 
     return model, data
 

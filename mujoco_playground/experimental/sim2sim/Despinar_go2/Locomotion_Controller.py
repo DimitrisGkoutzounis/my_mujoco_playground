@@ -15,7 +15,7 @@ class Locomotion_Controller:
       vel_scale_x: float = 1.5,
       vel_scale_y: float = 0.8,
       vel_scale_rot: float = 2 * np.pi,
-      locomotion_cmd: np.array = np.zeros(3) # Navigator = Navigator()
+      locomotion_cmd: np.array = np.zeros(3)
   ):
     self._output_names = ["continuous_actions"]
     self._policy = rt.InferenceSession(
@@ -29,11 +29,7 @@ class Locomotion_Controller:
     self._counter = 0
     self._n_substeps = n_substeps
 
-    self._joystick = np.zeros(3)#locomotion_cmd#Navigator(
-        #vel_scale_x=vel_scale_x,
-        #vel_scale_y=vel_scale_y,
-        #vel_scale_rot=vel_scale_rot,
-    #)
+    self._joystick = np.zeros(3)
 
   def update_locomotion_cmd(self, cmd_):
     self._joystick = cmd_
@@ -56,7 +52,7 @@ class Locomotion_Controller:
         self._last_action,
         self._joystick,
     ])
-    print("From get_obs_locomotion",self._joystick)
+    # print("From get_obs_locomotion",self._joystick)
 
     return obs_locomotion.astype(np.float32)
 
