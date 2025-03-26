@@ -3,9 +3,15 @@ from NavigationPolicy import NavigationPolicy
 from Locomotion_Controller import Locomotion_Controller
 import numpy as np
 
+from mujoco_playground._src.dynamic_events.arm_mujoco.src.Robot  import RobotGo2
+from mujoco_playground._src.dynamic_events.arm_mujoco.src.Arm  import Arm
+
+
 class TopLevelController:
-    def __init__(self):
-        pass
+    def __init__(self, model, data):
+        # Objects from Arm and RobotGo2
+        self.robot_go2 = RobotGo2()
+        self.arm = Arm(model=model, data=data)
     
     navigation_policy_ = None
     locomotion_ctrl_ = None
@@ -14,7 +20,7 @@ class TopLevelController:
 
     def control_callback(self, model, data):
         # nonlocal self.t_last_cmd
-
+    
         # Set new vel cmd per dt_new_cmd
         if (data.time - self.t_last_cmd) >= self.dt_new_cmd:
             print("New cmd at:",data.time)
@@ -25,4 +31,4 @@ class TopLevelController:
             self.t_last_cmd = data.time
 
         # Execute the locomotion cmd
-        self.locomotion_ctrl_.exec_locomotion_control(model=model, data=data)
+        self.locomotion_ctrl_.exec_locomotion_control(model=model, data=data, robot=self.robot_go2)

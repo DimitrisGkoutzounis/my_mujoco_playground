@@ -54,12 +54,13 @@ def main_function(model=None, data=None):
     model.opt.timestep = sim_dt
 
 
+    
     # Top Level Controller - Controls EVERYTHING
-    top_controller = TopLevelController()
+    top_controller = TopLevelController(model=model, data=data)
     # Locomotion Controller from Trained Onnx Policy
     top_controller.locomotion_ctrl_ = Locomotion_Controller(
         locomotion_policy_path=(_ONNX_DIR / "go2_policy_galloping.onnx").as_posix(),
-        default_angles=np.array(model.keyframe("home").qpos[7:]),
+        default_angles=np.array(model.keyframe("home").qpos[top_controller.robot_go2.i_start_qpos:top_controller.robot_go2.i_end_qpos]),
         n_substeps=n_substeps,
         action_scale=0.5,
         vel_scale_x=1.5,
@@ -69,7 +70,7 @@ def main_function(model=None, data=None):
     )
     # TBD: Future definition of Navigation Policy
     top_controller.navigation_policy_ = NavigationPolicy(
-            default_angles=np.array(model.keyframe("home").qpos[7:]), #TBD: FIX THOSE DEFAULT ANGELS
+            default_angles=np.array(model.keyframe("home").qpos[top_controller.robot_go2.i_base_start_qpos:top_controller.robot_go2.i_end_qpos]), #TBD: FIX THOSE DEFAULT ANGELS
             n_substeps=n_substeps,  #TBD: FIX THOSE DEFAULT N_SUBSTEPS
             action_scale=0.5,
         )

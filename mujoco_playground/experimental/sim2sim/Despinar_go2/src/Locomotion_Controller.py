@@ -3,6 +3,9 @@ import numpy as np
 import onnxruntime as rt
 from Navigator import Navigator
 
+from mujoco_playground._src.dynamic_events.arm_mujoco.src.Robot  import RobotGo2
+
+
 class Locomotion_Controller:
   """Low level - Locomotion ONNX controller for Go2 robot."""
 
@@ -34,15 +37,17 @@ class Locomotion_Controller:
   def update_locomotion_cmd(self, cmd_):
     self._joystick = cmd_
 
-  def get_obs_locomotion(self, model, data) -> np.ndarray:
+  def get_obs_locomotion(self, model, data, robot) -> np.ndarray:
     #print all detected sensors
-
+    print("In get_obs_locomotion")
     linvel = data.sensor("local_linvel").data
     gyro = data.sensor("gyro").data
     imu_xmat = data.site_xmat[model.site("imu").id].reshape(3, 3)
     gravity = imu_xmat.T @ np.array([0, 0, -1])
-    joint_angles = data.qpos[7:] - self._default_angles
-    joint_velocities = data.qvel[6:]
+    #[7:] HERE
+    joint_angles = data.qpos[robot.i_start_qpos:robot.i_end_qpos] - self._default_angles
+    #[:6] HERE
+    joint_velocities = data.qvel[robot.i_start_qpos-1:robot.i_end_qpos] 
     obs_locomotion = np.hstack([
         linvel,
         gyro,
@@ -56,14 +61,15 @@ class Locomotion_Controller:
 
     return obs_locomotion.astype(np.float32)
 
-  def exec_locomotion_control(self, model: mujoco.MjModel, data: mujoco.MjData) -> None:
+  def exec_locomotion_control(self, model: mujoco.MjModel, data: mujoco.MjData, robot: RobotGo2) -> None:
     self._counter += 1
     if self._counter % self._n_substeps == 0:
-      obs_locomotion = self.get_obs_locomotion(model, data)
+      obs_locomotion = self.get_obs_locomotion(model, data, robot=robot)
       # print current time
       onnx_input = {"obs": obs_locomotion.reshape(1, -1)}
       onnx_pred = self._policy.run(self._output_names, onnx_input)[0][0]
       self._last_action = onnx_pred.copy()
-      data.ctrl[:] = onnx_pred * self._action_scale + self._default_angles
+      # HERE [:]
+      data.ctrl[robot.i_start_ctrl:robot.i_end_ctrl] = onnx_pred * self._action_scale + self._default_angles
 
  
