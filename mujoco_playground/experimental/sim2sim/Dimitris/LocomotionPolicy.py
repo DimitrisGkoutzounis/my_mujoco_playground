@@ -41,19 +41,12 @@ class LocomotionPolicy:
     self.cmd_y = 0.0
     self.cmd_yaw = 0.0
 
-    # self._locomotionController = TrajectoryPolicy(
-    #     vel_scale_x=vel_scale_x,
-    #     vel_scale_y=vel_scale_y,
-    #     vel_scale_rot=vel_scale_rot,
-    # )
      
-  def set_cmd_vel(self, x, y, yaw):
+  def set_cmd_vel(self, x, y):
     """Set command velocities from high-level trajectory controller."""
     
-    print(f"Setting command velocities: x={x}, y={y}, yaw={yaw}")
     self.cmd_x = x
     self.cmd_y = y
-    self.cmd_yaw = yaw
 
   def get_obs(self, model, data) -> np.ndarray:
     #print all detected sensors
@@ -66,6 +59,9 @@ class LocomotionPolicy:
     joint_velocities = data.qvel[6:]
     
     cmd_vels = np.array([self.cmd_x, self.cmd_y, self.cmd_yaw])
+    print(f"cmd_vels: {cmd_vels}")
+    
+    
     obs = np.hstack([
         linvel,
         gyro,
