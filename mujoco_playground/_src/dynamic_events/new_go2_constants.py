@@ -17,10 +17,11 @@
 from etils import epath
 
 from mujoco_playground._src import mjx_env
+# from mujoco_playground._src.dynamic_events.arm_mujoco.src.Arm import Arm
 
-ROOT_PATH = mjx_env.ROOT_PATH / "dynamic_events"
+ROOT_PATH = mjx_env.ROOT_PATH / "dynamic_events/arm_mujoco"
 UR5E_GO2_SCENE = (
-    ROOT_PATH / "xmls" / "scene.xml"
+    ROOT_PATH / "xml" / "scene.xml"
 )
 
 
