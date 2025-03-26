@@ -22,6 +22,7 @@
 # ==============================================================================
 """Deploy an MJX policy in ONNX format to C MuJoCo and play with it."""
 
+
 from etils import epath
 import mujoco
 import mujoco.viewer as viewer

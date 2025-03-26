@@ -37,7 +37,7 @@ class Gamepad:
   def __init__(
       self,
       vendor_id=16700,#0x046D,
-      product_id=8449,#0xC219,
+      product_id=42243,#0xC219,
       vel_scale_x=0.4,
       vel_scale_y=0.4,
       vel_scale_rot=1.0,
@@ -60,7 +60,7 @@ class Gamepad:
 
   def _connect_device(self):
     try:
-      self._device = hid.Device(path=b'/dev/hidraw2') #
+      self._device = hid.device(path=b'/dev/hidraw2') #
       # self._device.open(self._vendor_id, self._product_id)
       # self._device.set_nonblocking(True)
       # print(

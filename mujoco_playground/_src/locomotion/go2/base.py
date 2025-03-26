@@ -39,7 +39,6 @@ def get_assets() -> Dict[str, bytes]:
 
 class Go2Env(mjx_env.MjxEnv):
   """Base class for Go2 environments."""
-
   def __init__(
       self,
       xml_path: str,

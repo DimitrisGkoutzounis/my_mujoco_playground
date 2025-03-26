@@ -93,7 +93,6 @@ def main_function(model=None, data=None):
     return model, data
 
 
-
 if __name__ == "__main__":
   
   viewer.launch(loader=main_function)

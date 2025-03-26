@@ -25,7 +25,6 @@ UR5E_GO2_SCENE = (
 )
 
 
-
 def task_to_xml(task_name: str) -> epath.Path:
   return {
       "arm_go2_simple_terrain": UR5E_GO2_SCENE,
