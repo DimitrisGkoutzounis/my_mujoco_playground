@@ -40,6 +40,11 @@ class LocomotionPolicy:
     self.cmd_x = 0.0
     self.cmd_y = 0.0
     self.cmd_yaw = 0.0
+    
+    self.curr_x = 0.0
+    self.curr_y = 0.0
+    self.curr_yaw = 0.0
+    
 
      
   def set_cmd_vel(self, x, y):
@@ -47,6 +52,14 @@ class LocomotionPolicy:
     
     self.cmd_x = x
     self.cmd_y = y
+    
+  def current_pos(self, data):
+    """Get the current position of the robot."""
+    self.curr_x = data.qpos[0]
+    self.curr_y = data.qpos[1]
+    self.curr_yaw = data.qpos[2]
+    
+    return np.array([self.curr_x, self.curr_y, self.curr_yaw])
 
   def get_obs(self, model, data) -> np.ndarray:
     #print all detected sensors
@@ -71,6 +84,9 @@ class LocomotionPolicy:
         self._last_action,
         cmd_vels
     ])
+    
+    #print the position of the robot
+    print(f"robot position: {data.qpos[:3]}")
     return obs.astype(np.float32)
 
   def get_control(self, model: mujoco.MjModel, data: mujoco.MjData) -> None:

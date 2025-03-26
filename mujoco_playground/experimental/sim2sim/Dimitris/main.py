@@ -1,3 +1,26 @@
+# ==============================================================================
+# ==============================================================================
+
+# Hey, I modified Copyright 2025 DeepMind Technologies Limited
+# for an upcoming project regarding navigation policies for Go2 Unitree's quadrupedal robot.
+
+# ==============================================================================
+# ==============================================================================
+# Copyright 2025 DeepMind Technologies Limited
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
 """Deploy an MJX policy in ONNX format to C MuJoCo and play with it."""
 
 from etils import epath
@@ -13,8 +36,9 @@ pygame.display.set_mode((1, 1))  # Ensures the video system is initialized
 from mujoco_playground._src.locomotion.go2 import go2_constants
 from mujoco_playground._src.locomotion.go2.base import get_assets
 from mujoco_playground.experimental.sim2sim.Dimitris.LocomotionPolicy import LocomotionPolicy
-from mujoco_playground.experimental.sim2sim.Dimitris.TrajectoryPolicy import TrajectoryPolicy
-from mujoco_playground.experimental.sim2sim.Dimitris.generator import ShapeGenerator
+from mujoco_playground.experimental.sim2sim.Dimitris.TrajectoryGenerator import TrajectoryGenerator
+from mujoco_playground.experimental.sim2sim.Dimitris.TrajectoryPolicy import TrajectoryPolicy 
+# from mujoco_playground.experimental.sim2sim.Dimitris.TrajectoryGenerator import ShapeGenerator
 
 
 _HERE = epath.Path(__file__).parent
@@ -54,13 +78,19 @@ def main(model=None, data=None):
       vel_scale_rot=2 * np.pi,
   )
   
+  generator = TrajectoryGenerator()
+  
+  
+    
   
   trajectory_policy = TrajectoryPolicy(
     locomotion_policy=locomotion_policy,
+    trajectory_generator=generator,
     n_substeps=n_substeps,
   )
   
-  mujoco.set_mjcb_control(trajectory_policy.controller)       # High-level trajectory
+  #set the high-level controller
+  mujoco.set_mjcb_control(trajectory_policy.trajectory_controller)   
   
   
   

@@ -1,10 +1,33 @@
+# ==============================================================================
+# ==============================================================================
+
+# Hey, I modified Copyright 2025 DeepMind Technologies Limited
+# for an upcoming project regarding navigation policies for Go2 Unitree's quadrupedal robot.
+
+# ==============================================================================
+# ==============================================================================
+# Copyright 2025 DeepMind Technologies Limited
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
+
 import numpy as np
 
 
-class ShapeGenerator:
-    def __init__(self, desired_shape: str, shape_size: float):
-        self.shape_size = shape_size
-        self.shape_type = desired_shape.lower()
+class TrajectoryGenerator:
+    def __init__(self):
+        pass
 
     def generate(self):
         """Returns a flat list of (x, y) waypoints for the selected shape."""
@@ -60,3 +83,15 @@ class ShapeGenerator:
         p3 = (self.shape_size / 2, self.shape_size * np.sqrt(3) / 2)
 
         return [p1, p2, p3, p1]  # loop back to start
+    
+    def _generate_simple_target(self):
+        """Return x and y coordinates of a target point."""
+        
+        #generate random x and y coordinates
+        target_x = np.random.uniform(-2, 2)
+        target_y = np.random.uniform(-2, 2)
+        
+        target_coords = [(target_x, target_y)]
+        return target_coords
+        
+        
