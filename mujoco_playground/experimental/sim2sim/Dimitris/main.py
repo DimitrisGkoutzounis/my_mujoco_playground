@@ -60,7 +60,6 @@ def main(model=None, data=None):
     n_substeps=n_substeps,
   )
   
-  # wait for 1 second
   mujoco.set_mjcb_control(trajectory_policy.controller)       # High-level trajectory
   
   

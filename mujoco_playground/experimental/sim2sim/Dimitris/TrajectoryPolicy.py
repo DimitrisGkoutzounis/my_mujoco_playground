@@ -17,26 +17,21 @@ class TrajectoryPolicy:
         self.cmd_vel_y = 0.0
 
     def controller(self, model, data):
-        self._counter += 1
+        current_time = time.time()
 
-        # Run control every n_substeps (e.g. every 50Hz if sim runs at 250Hz)
-        if self._counter % self._n_substeps != 0:
-            return
 
-        # Update cmd_vel if it's time
-        self.control_loop()
-
+        if (current_time - self.last_update_time) >= 2.0: # 2 second has passed
+            self.update_control()
+            print(f"[cmd_vel updated] x: {self.cmd_vel_x}, y: {self.cmd_vel_y}")
+            self.last_update_time = current_time
         # Always apply control
         if self.locomotion_policy:
             self.locomotion_policy.get_control(model, data)
 
-    def control_loop(self):
-        current_time = time.time()
-        if (current_time - self.last_update_time) >= 5.0:
-            self.generate_velocity()
-            print(f"[cmd_vel updated] x: {self.cmd_vel_x}, y: {self.cmd_vel_y}")
-            self.locomotion_policy.set_cmd_vel(self.cmd_vel_x, self.cmd_vel_y)
-            self.last_update_time = current_time
+    def update_control(self):
+        # Generate random velocity
+        self.generate_velocity()
+        self.locomotion_policy.set_cmd_vel(self.cmd_vel_x, self.cmd_vel_y)
 
     def generate_velocity(self):
         
