@@ -49,10 +49,8 @@ def main_function(model=None, data=None):
 
     # Define params
     ctrl_dt = 0.02
-    sim_dt = 0.004
+    sim_dt =  model.opt.timestep # 0.004
     n_substeps = int(round(ctrl_dt / sim_dt))
-    model.opt.timestep = sim_dt
-
 
     
     # Top Level Controller - Controls EVERYTHING
@@ -60,6 +58,7 @@ def main_function(model=None, data=None):
     # Locomotion Controller from Trained Onnx Policy
     top_controller.locomotion_ctrl_ = Locomotion_Controller(
         locomotion_policy_path=(_ONNX_DIR / "go2_policy_galloping.onnx").as_posix(),
+        # Pass only qpos regarding Go2's joints, NOT base's x,y,z,quat 
         default_angles=np.array(model.keyframe("home").qpos[top_controller.robot_go2.i_start_qpos:top_controller.robot_go2.i_end_qpos]),
         n_substeps=n_substeps,
         action_scale=0.5,
@@ -70,10 +69,13 @@ def main_function(model=None, data=None):
     )
     # TBD: Future definition of Navigation Policy
     top_controller.navigation_policy_ = NavigationPolicy(
-            default_angles=np.array(model.keyframe("home").qpos[top_controller.robot_go2.i_base_start_qpos:top_controller.robot_go2.i_end_qpos]), #TBD: FIX THOSE DEFAULT ANGELS
+            #TBD: FIX THOSE DEFAULT ANGELS
+            default_angles=np.array(model.keyframe("home").qpos[top_controller.robot_go2.i_start_qpos:top_controller.robot_go2.i_end_qpos]), 
+            # default_angles=np.array(model.keyframe("home").qpos[:]), 
             n_substeps=n_substeps,  #TBD: FIX THOSE DEFAULT N_SUBSTEPS
             action_scale=0.5,
         )
+
     # Init time variables
     top_controller.t_last_cmd = data.time
     top_controller.dt_new_cmd = 0.5 #0.5sec - update vel command per delta t

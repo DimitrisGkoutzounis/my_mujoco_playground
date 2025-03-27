@@ -46,8 +46,9 @@ class Locomotion_Controller:
     gravity = imu_xmat.T @ np.array([0, 0, -1])
     #[7:] HERE
     joint_angles = data.qpos[robot.i_start_qpos:robot.i_end_qpos] - self._default_angles
-    #[:6] HERE
+    #[:6] HERE [6 arm, 6 free joint, and then start from 12 = 13(go2.i_start_qpos) -1]
     joint_velocities = data.qvel[robot.i_start_qpos-1:robot.i_end_qpos] 
+
     obs_locomotion = np.hstack([
         linvel,
         gyro,
@@ -71,5 +72,3 @@ class Locomotion_Controller:
       self._last_action = onnx_pred.copy()
       # HERE [:]
       data.ctrl[robot.i_start_ctrl:robot.i_end_ctrl] = onnx_pred * self._action_scale + self._default_angles
-
- 

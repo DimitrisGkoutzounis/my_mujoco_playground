@@ -26,11 +26,11 @@ class NavigationPolicy:
         """Returns zero action (does nothing)."""
         return np.zeros_like(self._default_angles, dtype=np.float32)
         
-    def get_control(self, model: mujoco.MjModel, data: mujoco.MjData) -> None:
-        self._counter += 1
-        if self._counter % self._n_substeps == 0:
-            data.ctrl[:] = self.get_action(model, data)
-            print(f"Simulation time: {data.time:.4f}")
-            print(f"Action: {data.ctrl}")
-            print(f"Sensor data: {data.sensor('local_linvel').data}")
-            print(f"Sensor data: {data.sensor('gyro').data}")
+    # def get_control(self, model: mujoco.MjModel, data: mujoco.MjData) -> None:
+    #     self._counter += 1
+    #     if self._counter % self._n_substeps == 0:
+    #         data.ctrl[:] = self.get_action(model, data)
+    #         print(f"Simulation time: {data.time:.4f}")
+    #         print(f"Action: {data.ctrl}")
+    #         print(f"Sensor data: {data.sensor('local_linvel').data}")
+    #         print(f"Sensor data: {data.sensor('gyro').data}")
