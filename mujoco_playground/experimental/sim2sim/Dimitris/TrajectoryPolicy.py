@@ -109,8 +109,6 @@ class TrajectoryPolicy:
 
         # Get current position and velocity from locomotion policy
         
-
-        # PD gains (tune these)
         Kp = 1.0
         Kd = 0.2
 

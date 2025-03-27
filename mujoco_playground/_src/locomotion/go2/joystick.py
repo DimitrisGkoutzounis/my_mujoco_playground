@@ -38,8 +38,10 @@ def default_config() -> config_dict.ConfigDict:
       Kd=0.5,
       action_repeat=1,
       action_scale=0.5,
-      history_len=1,
-      soft_joint_pos_limit_factor=0.95,
+      history_len=1, #observation history lenght
+      soft_joint_pos_limit_factor=0.95, #95% of the joint limits
+      
+      
       noise_config=config_dict.create(
           level=1.0,  # Set to 0.0 to disable noise.
           scales=config_dict.create(
@@ -50,34 +52,42 @@ def default_config() -> config_dict.ConfigDict:
               linvel=0.1,
           ),
       ),
+      
+      
       reward_config=config_dict.create(
+        
+        ## === scales === ##
           scales=config_dict.create(
               # Tracking.
-              tracking_lin_vel=1.0,
-              tracking_ang_vel=0.5,
+              tracking_lin_vel=1.0, #+1 for good tracking des_vel
+              tracking_ang_vel=0.5, #+0.5 for good tracking des_ang_vel
               # Base reward.
-              lin_vel_z=-0.5,
-              ang_vel_xy=-0.05,
-              orientation=-5.0,
+              lin_vel_z=-0.5, #-0.5 for vertical velocity
+              ang_vel_xy=-0.05, #-0.05 for angular velocity
+              orientation=-5.0, #-5 for orientation, maintain proper alignmet
               # Other.
-              dof_pos_limits=-1.0,
-              pose=0.5,
+              dof_pos_limits=-1.0, #-1 for exceeding joint limits
+              pose=0.5, #+0.5 for proper pose
               # Other.
-              termination=-1.0,
-              stand_still=-1.0,
+              termination=-1.0, #-1 for early termination
+              stand_still=-1.0, #-1 for standing still
               # Regularization.
-              torques=-0.0002,
-              action_rate=-0.01,
-              energy=-0.001,
+              torques=-0.0002, #-0.0002 for excessive torque usage
+              action_rate=-0.01, #-0.01 for excessive action rate
+              energy=-0.001, #-0.001 for excessive energy usage
               # Feet.
-              feet_clearance=-2.0,
-              feet_height=-0.2,
-              feet_slip=-0.1,
-              feet_air_time=0.1,
+              feet_clearance=-2.0, #-2.0 for isnufficient foot clearance
+              feet_height=-0.2, #-0.2 for insufficient foot height
+              feet_slip=-0.1, #-0.1 for excessive foot slip
+              feet_air_time=0.1, #+0.1 for appropriate air time
           ),
-          tracking_sigma=0.25,
-          max_foot_height=0.1,
+          
+          
+          tracking_sigma=0.25, #likely std of Gaussian distribution, how strictly the agent should follow the command
+          max_foot_height=0.1, #set upper footheight limit
       ),
+      
+      
       pert_config=config_dict.create(
           enable=False,
           velocity_kick=[0.0, 3.0],
@@ -86,7 +96,9 @@ def default_config() -> config_dict.ConfigDict:
       ),
       command_config=config_dict.create(
           # Uniform distribution for command amplitude.
+          # x,y, yaw velocity command ranges
           a=[1.5, 0.8, 1.2],
+          
           # Probability of not zeroing out new command.
           b=[0.9, 0.25, 0.5],
       ),
@@ -277,7 +289,7 @@ class Joystick(go2_base.Go2Env):
         jp.round(jax.random.exponential(key2) * 5.0 / self.dt).astype(jp.int32),
         state.info["steps_until_next_cmd"],
     )
-    state.info["feet_air_time"] *= ~contact
+    state.info["feet_air_time"] *= ~contact #NOT operation: selects which feet NOT in contact(still in the air)
     state.info["last_contact"] = contact
     state.info["swing_peak"] *= ~contact
     for k, v in rewards.items():

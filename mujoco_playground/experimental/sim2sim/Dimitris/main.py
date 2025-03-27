@@ -38,7 +38,6 @@ from mujoco_playground._src.locomotion.go2.base import get_assets
 from mujoco_playground.experimental.sim2sim.Dimitris.LocomotionPolicy import LocomotionPolicy
 from mujoco_playground.experimental.sim2sim.Dimitris.TrajectoryGenerator import TrajectoryGenerator
 from mujoco_playground.experimental.sim2sim.Dimitris.TrajectoryPolicy import TrajectoryPolicy 
-# from mujoco_playground.experimental.sim2sim.Dimitris.TrajectoryGenerator import ShapeGenerator
 
 
 _HERE = epath.Path(__file__).parent
