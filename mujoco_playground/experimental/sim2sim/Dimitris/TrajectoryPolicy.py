@@ -63,7 +63,6 @@ class TrajectoryPolicy:
 
         if (current_time - self.last_update_time) >= 2.0: # 2 second has passed
             self.update_control()
-            print(f"[cmd_vel updated] x: {self.cmd_vel_x}, y: {self.cmd_vel_y}")
             self.last_update_time = current_time
         # Always apply control
         if self.locomotion_policy:
@@ -85,22 +84,17 @@ class TrajectoryPolicy:
         if(self.target is None):
             """Set initial target"""
             self.set_target()
-            print(f"Target set: {self.target}")
         
         error_pos = np.linalg.norm(self.current_pos - self.target)
-        print(f"Current position: {self.current_pos}")
-        print(f"target position: {self.target}")
-        print(f"Error {error_pos}")
         if error_pos < 0.5:
             # Generate new trajectory
-            self.trajectory_generator._generate_simple_target()
-            print(f"[Trajectory updated] {self.target}")
+            self.set_target()
         
         else:
             # Compute the desired velocity
             self.cmd_vel_x, self.cmd_vel_y = self.compute_velocity(data)
+            print("Target:", self.target)
             self.update_trajectory_control()
-            print(f"[cmd_vel updated] x: {self.cmd_vel_x}, y: {self.cmd_vel_y}")
             
             
             
@@ -120,7 +114,6 @@ class TrajectoryPolicy:
 
         # Optional: Clip velocities to [-1, 1]
         vel_cmd = np.clip(vel_cmd, -1.0, 1.0).flatten()
-        print(f"Velocity command: {vel_cmd[0]}")
         
         #set the cmd_vel
         self.cmd_vel_x = vel_cmd[0]
@@ -137,14 +130,12 @@ class TrajectoryPolicy:
     def set_target(self):
         # Set the target for the locomotion policy
         self.target = np.array(self.trajectory_generator._generate_simple_target())
-        print(f"Target set: {self.target}")
         
     def set_current_pos(self,data):
         # Set the current position for the locomotion policy
         self.current_pos = np.array(self.locomotion_policy.current_pos(data))
         xy_cords = self.current_pos[:2]
         self.current_pos = xy_cords
-        print(f"Current position set: {self.current_pos}")
 
     def get_velocity(self):
         return self.cmd_vel_x, self.cmd_vel_y

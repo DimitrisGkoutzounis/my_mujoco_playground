@@ -88,8 +88,8 @@ class TrajectoryGenerator:
         """Return x and y coordinates of a target point."""
         
         #generate random x and y coordinates
-        target_x = np.random.uniform(-2, 2)
-        target_y = np.random.uniform(-2, 2)
+        target_x = np.random.uniform(-5, 5)
+        target_y = np.random.uniform(-5, 5)
         
         target_coords = [(target_x, target_y)]
         return target_coords

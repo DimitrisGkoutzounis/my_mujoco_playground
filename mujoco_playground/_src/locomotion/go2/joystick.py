@@ -279,6 +279,8 @@ class Joystick(go2_base.Go2Env):
     state.info["last_act"] = action
     state.info["steps_until_next_cmd"] -= 1
     state.info["rng"], key1, key2 = jax.random.split(state.info["rng"], 3)
+    
+    #check if we need to sample a new command
     state.info["command"] = jp.where(
         state.info["steps_until_next_cmd"] <= 0,
         self.sample_command(key1, state.info["command"]),

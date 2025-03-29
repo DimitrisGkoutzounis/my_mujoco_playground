@@ -213,7 +213,7 @@ def main(argv):
   if _VISION.value:
     env_cfg.vision = True
     env_cfg.vision_config.render_batch_size = ppo_params.num_envs
-  env = registry.load(_ENV_NAME.value, config=env_cfg)
+  env = registry.load(_ENV_NAME.value, config=env_cfg) #load the environment
 
   print(f"Environment Config:\n{env_cfg}")
   print(f"PPO Training Parameters:\n{ppo_params}")
@@ -315,6 +315,15 @@ def main(argv):
   if "num_eval_envs" in training_params:
     del training_params["num_eval_envs"]
 
+
+
+
+#################################################
+##################### TRAINING ################
+#################################################
+
+
+
   train_fn = functools.partial(
       ppo.train,
       **training_params,
@@ -360,6 +369,14 @@ def main(argv):
   if len(times) > 1:
     print(f"Time to JIT compile: {times[1] - times[0]}")
     print(f"Time to train: {times[-1] - times[1]}")
+
+
+#################################################
+##################### Evaluation ################
+#################################################
+
+
+
 
   print("Starting inference...")
 
