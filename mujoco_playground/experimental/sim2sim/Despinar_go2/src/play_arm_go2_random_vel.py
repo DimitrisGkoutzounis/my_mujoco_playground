@@ -16,6 +16,7 @@ import mujoco
 import mujoco.viewer as viewer
 import numpy as np
 import onnxruntime as rt
+# import glfw
 
 # from mujoco_playground._src.locomotion.go2 import go2_constants
 # from mujoco_playground._src.locomotion.go2.base import get_assets
@@ -45,7 +46,27 @@ def main_function(model=None, data=None):
     data = mujoco.MjData(model)
     # Mujoco reset
     mujoco.mj_resetDataKeyframe(model, data, 0)
-    
+
+    # renderer = mujoco.Renderer(model, height=480, width=640)
+    # context =  renderer._mjr_context
+
+    # Which is the Go2Env
+    # perception_context = go2_env.get_context()
+
+    # # ========== GLFW Setup ==========
+    # if not glfw.init():
+    #     raise RuntimeError("Could not initialize GLFW")
+
+    # window = glfw.create_window(1244, 700, "MuJoCo Arm Control", None, None)
+    # glfw.make_context_current(window)
+    # glfw.swap_interval(1)
+
+    # cam = mujoco.MjvCamera()
+    # opt = mujoco.MjvOption()
+    # scene = mujoco.MjvScene(model, maxgeom=2000)
+    # context = mujoco.MjrContext(model, mujoco.mjtFontScale.mjFONTSCALE_150)
+    # perception_context = mujoco.MjrContext(model, mujoco.mjtFontScale.mjFONTSCALE_100)
+
 
     # Define params
     ctrl_dt = 0.02
