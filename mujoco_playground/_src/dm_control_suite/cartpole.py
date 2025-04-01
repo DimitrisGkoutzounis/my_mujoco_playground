@@ -33,13 +33,13 @@ _XML_PATH = mjx_env.ROOT_PATH / "dm_control_suite" / "xmls" / "cartpole.xml"
 
 def default_vision_config() -> config_dict.ConfigDict:
   return config_dict.create(
-      gpu_id=0,
-      render_batch_size=512,
-      render_width=64,
-      render_height=64,
-      enabled_geom_groups=[0, 1, 2],
-      use_rasterizer=False,
-      history=3,
+      gpu_id=0, #id of the gpu
+      render_batch_size=512, #frames in a single batch
+      render_width=64, #resulution of rendered images
+      render_height=64, # 64x64
+      enabled_geom_groups=[0, 1, 2], # XML geometric groups to render
+      use_rasterizer=False, #rasterizer converts 3D to 2D
+      history=3, #number of past frames to keep
   )
 
 
@@ -164,6 +164,7 @@ class Balance(mjx_env.MjxEnv):
 
     data = mjx_env.init(self.mjx_model, qpos=qpos, qvel=qvel)
 
+    #reset the metrics
     metrics = {
         "reward/upright": jp.zeros(()),
         "reward/centered": jp.zeros(()),
@@ -210,6 +211,8 @@ class Balance(mjx_env.MjxEnv):
   def _get_obs(self, data: mjx.Data, info: dict[str, Any]) -> jax.Array:
     del info  # Unused.
     cart_position = data.qpos[self._slider_qposadr]
+    
+    #y-axis rotation
     pole_angle_cos = data.xmat[2:, 2, 2]  # zz.
     pole_angle_sin = data.xmat[2:, 0, 2]  # xz.
     return jp.concatenate([
