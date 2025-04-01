@@ -103,6 +103,9 @@ class Go2Env(mjx_env.MjxEnv):
         for sensor_name in consts.FEET_POS_SENSOR
     ])
 
+  # def get_context(self):
+  #   return mjx_env.renderer._mjr_context
+  
   # Accessors.
 
   @property
