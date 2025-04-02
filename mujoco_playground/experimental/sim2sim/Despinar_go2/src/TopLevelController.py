@@ -8,11 +8,11 @@ from mujoco_playground._src.dynamic_events.arm_mujoco.src.Arm  import Arm
 from mujoco_playground._src.dynamic_events.arm_mujoco.src.Perception import Perception
 
 class TopLevelController:
-    def __init__(self, model, data): #, perception_cont
+    def __init__(self): #, perception_cont
         # self.context = context
         # Objects from Arm and RobotGo2
         self.robot_go2 = RobotGo2()
-        self.arm = Arm(model=model, data=data)
+        self.arm = Arm()
         self.perception = Perception()  #, perception_cont
 
     navigation_policy_ = None

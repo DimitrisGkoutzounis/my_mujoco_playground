@@ -75,7 +75,7 @@ def main_function(model=None, data=None):
 
     
     # Top Level Controller - Controls EVERYTHING
-    top_controller = TopLevelController(model=model, data=data)
+    top_controller = TopLevelController()
     # Locomotion Controller from Trained Onnx Policy
     top_controller.locomotion_ctrl_ = Locomotion_Controller(
         locomotion_policy_path=(_ONNX_DIR / "go2_policy_galloping.onnx").as_posix(),
