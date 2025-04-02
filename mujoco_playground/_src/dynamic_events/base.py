@@ -37,7 +37,7 @@ def get_assets() -> Dict[str, bytes]:
   return assets
 
 
-class Go2Env(mjx_env.MjxEnv):
+class Go2NavEnv(mjx_env.MjxEnv):
   """Base class for Go2 environments."""
 
   def __init__(
