@@ -23,6 +23,7 @@ from mujoco_playground._src import dm_control_suite
 from mujoco_playground._src import locomotion
 from mujoco_playground._src import manipulation
 from mujoco_playground._src import mjx_env
+from mujoco_playground._src import dynamic_events
 
 DomainRandomizer = Optional[
     Callable[[mjx.Model, jax.Array], Tuple[mjx.Model, mjx.Model]]
@@ -34,6 +35,7 @@ ALL_ENVS = (
     dm_control_suite.ALL_ENVS
     + locomotion.ALL_ENVS
     + manipulation.ALL_ENVS
+    + dynamic_events.ALL_ENVS
 )
 
 
@@ -44,7 +46,8 @@ def get_default_config(env_name: str):
     return locomotion.get_default_config(env_name)
   elif env_name in dm_control_suite.ALL_ENVS:
     return dm_control_suite.get_default_config(env_name)
-
+  elif env_name in dynamic_events.ALL_ENVS:
+    return dynamic_events.get_default_config(env_name)
   raise ValueError(f"Env '{env_name}' not found in default configs.")
 
 
@@ -59,6 +62,8 @@ def load(
     return locomotion.load(env_name, config, config_overrides)
   elif env_name in dm_control_suite.ALL_ENVS:
     return dm_control_suite.load(env_name, config, config_overrides)
+  elif env_name in dynamic_events.ALL_ENVS:
+    return dynamic_events.load(env_name, config, config_overrides)
 
   raise ValueError(f"Env '{env_name}' not found. Available envs: {ALL_ENVS}")
 

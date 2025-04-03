@@ -1,7 +1,6 @@
 import mujoco
 import numpy as np
 import onnxruntime as rt
-from Navigator import Navigator
 
 from mujoco_playground._src.dynamic_events.arm_mujoco.src.Robot  import RobotGo2
 
