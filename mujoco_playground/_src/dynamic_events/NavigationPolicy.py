@@ -7,28 +7,31 @@ from arm_mujoco.src.Robot  import RobotGo2
 from arm_mujoco.src.Arm  import Arm
 from arm_mujoco.src.Perception import Perception
 from Locomotion_Controller import Locomotion_Controller
-
+import base as go2_base
 # NavigationPolicy Class: Defines the navigation policy, TBD
 #  Until now: it has Navigator() which decides randomly the vel cmds
-class NavigationPolicy:
+
+
+class NavigationPolicy: #go2_base.Go2NavEnv
     def __init__(
         self,
         default_angles: np.ndarray,
-        n_substeps: int = 0,
         action_scale: float = 0.5,
         vel_scale_x: float = 1.5,
         vel_scale_y: float = 0.8,
         vel_scale_rot: float = 2 * np.pi, 
         t_last_cmd: float = 0.0,
+        ctrl_dt: float = 0.01,
+        sim_dt : float = 0.002, #model.opt.timestep
         _ONNX_DIR = None,
         model = None
        ):
+        self.n_substeps = int(round(ctrl_dt / sim_dt))
         self._default_angles = default_angles
-        self._n_substeps = n_substeps
         self._action_scale = action_scale
         self._counter = 0
         self.t_last_cmd = 0.0
-        self.dt_new_cmd = 0.5 # HERE TBD
+        self.dt_new_cmd = 0.68 # HERE TBD
         self.robot_go2 = RobotGo2()
 
         # Constructor Locomotion_Controller
@@ -36,7 +39,8 @@ class NavigationPolicy:
         locomotion_policy_path=(_ONNX_DIR / "go2_policy_galloping.onnx").as_posix(),
         # Pass only qpos regarding Go2's joints, NOT base's x,y,z,quat 
         default_angles=np.array(model.keyframe("home").qpos[self.robot_go2.i_start_qpos:self.robot_go2.i_end_qpos]),
-        n_substeps=n_substeps,
+        # Pass different n_substeps if need. Works: int(round(0.01 / 0.002))
+        n_substeps=self.n_substeps, 
         action_scale=0.5,
         vel_scale_x=1.5,
         vel_scale_y=0.8,

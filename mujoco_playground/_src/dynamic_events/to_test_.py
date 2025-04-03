@@ -31,6 +31,11 @@ _ONNX_DIR = _HERE.parent.parent / "experimental/sim2sim"/ "onnx" # Modified this
 
 def main_function(model=None, data=None):
 
+    # Place Holder for ENV_NAME and extract model, data
+    ##################################################
+
+    ##################################################
+
     # Set no mujoco control - default callback
     mujoco.set_mjcb_control(None)
     # Load 
@@ -43,15 +48,14 @@ def main_function(model=None, data=None):
     # Mujoco reset
     mujoco.mj_resetDataKeyframe(model, data, 0)
 
-    # Define params
-    ctrl_dt = 0.02
-    sim_dt =  model.opt.timestep # 0.004
-    n_substeps = int(round(ctrl_dt / sim_dt))
+    # # Define params
+    # ctrl_dt = 0.01 # prev 0.02 -> 0.01 for better ctrl
+    # sim_dt =  model.opt.timestep # prev 0.004 -> 0.002
+    # n_substeps = int(round(ctrl_dt / sim_dt))
 
     # Top Level Controller
         # n_substeps: -> Navigation Policy
-    top_controller = TopLevelController(n_substeps=n_substeps,
-                                         _ONNX_DIR=_ONNX_DIR,
+    top_controller = TopLevelController(_ONNX_DIR=_ONNX_DIR,
                                          model=model)
 
     # top_controller.Nav_Policy.t_last_cmd = 0.0
