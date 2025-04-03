@@ -336,7 +336,7 @@ def main(argv):
       wrap_env_fn=None if _VISION.value else wrapper.wrap_for_brax_training,
       num_eval_envs=num_eval_envs,
   )
-
+  
   times = [time.monotonic()]
 
   # Progress function for logging

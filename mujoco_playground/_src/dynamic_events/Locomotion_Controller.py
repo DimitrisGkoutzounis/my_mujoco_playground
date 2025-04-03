@@ -39,7 +39,7 @@ class Locomotion_Controller:
 
   def get_obs_locomotion(self, model, data, robot) -> np.ndarray:
     #print all detected sensors
-    print("In get_obs_locomotion")
+    # print("In get_obs_locomotion")
     linvel = data.sensor("local_linvel").data
     gyro = data.sensor("gyro").data
     imu_xmat = data.site_xmat[model.site("imu").id].reshape(3, 3)
