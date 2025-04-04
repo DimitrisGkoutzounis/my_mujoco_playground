@@ -330,39 +330,39 @@ def main(argv):
 
 
 
-#   train_fn = functools.partial(
-#       ppo.train,
-#       **training_params,
-#       network_factory=network_factory,
-#       policy_params_fn=policy_params_fn,
-#       seed=_SEED.value,
-#       restore_checkpoint_path=restore_checkpoint_path,
-#       wrap_env_fn=None if _VISION.value else wrapper.wrap_for_brax_training,
-#       num_eval_envs=num_eval_envs,
-#   )
+  train_fn = functools.partial(
+      ppo.train,
+      **training_params,
+      network_factory=network_factory,
+      policy_params_fn=policy_params_fn,
+      seed=_SEED.value,
+      restore_checkpoint_path=restore_checkpoint_path,
+      wrap_env_fn=None if _VISION.value else wrapper.wrap_for_brax_training,
+      num_eval_envs=num_eval_envs,
+  )
   
-#   times = [time.monotonic()]
+  times = [time.monotonic()]
 
-#   # Progress function for logging
-#   def progress(num_steps, metrics):
-#     times.append(time.monotonic())
+  # Progress function for logging
+  def progress(num_steps, metrics):
+    times.append(time.monotonic())
 
-#     # Log to Weights & Biases
-#     if _USE_WANDB.value and not _PLAY_ONLY.value:
-#       wandb.log(metrics, step=num_steps)
+    # Log to Weights & Biases
+    if _USE_WANDB.value and not _PLAY_ONLY.value:
+      wandb.log(metrics, step=num_steps)
 
-#     # Log to TensorBoard
-#     if _USE_TB.value and not _PLAY_ONLY.value:
-#       for key, value in metrics.items():
-#         writer.add_scalar(key, value, num_steps)
-#       writer.flush()
+    # Log to TensorBoard
+    if _USE_TB.value and not _PLAY_ONLY.value:
+      for key, value in metrics.items():
+        writer.add_scalar(key, value, num_steps)
+      writer.flush()
 
-#     print(f"{num_steps}: reward={metrics['eval/episode_reward']:.3f}")
+    print(f"{num_steps}: reward={metrics['eval/episode_reward']:.3f}")
 
-#   # Load evaluation environment
-#   eval_env = (
-#       None if _VISION.value else registry.load(_ENV_NAME.value, config=env_cfg)
-#   )
+  # Load evaluation environment
+  eval_env = (
+      None if _VISION.value else registry.load(_ENV_NAME.value, config=env_cfg)
+  )
 
 
 

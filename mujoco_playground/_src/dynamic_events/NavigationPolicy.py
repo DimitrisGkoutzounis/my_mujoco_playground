@@ -89,34 +89,39 @@ def default_config() -> config_dict.ConfigDict:
 class NavigationPolicy(go2_base.Go2NavEnv):
     def __init__(
         self,
-        default_angles: np.ndarray = np.zeros(6),
-        action_scale: float = 0.5,
-        vel_scale_x: float = 1.5,
-        vel_scale_y: float = 0.8,
-        vel_scale_rot: float = 2 * np.pi, 
+        # default_angles: np.ndarray = np.zeros(3),
+        # action_scale: float = 0.5,
+        # vel_scale_x: float = 1.5,
+        # vel_scale_y: float = 0.8,
+        # vel_scale_rot: float = 2 * np.pi, 
         t_last_cmd: float = 0.0,
         ctrl_dt: float = 0.01, # This affect the Locomotion COntroller
         sim_dt : float = 0.002, # model.opt.timestep
         n_substeps : int = 5, 
         _ONNX_DIR : epath.Path = epath.Path(__file__).parent.parent.parent / "experimental/sim2sim"/ "onnx", # Modified this (_HERE.parent.parent), two folders back before access .onnx
-        model = None,
-        config = None,
+        config: config_dict.ConfigDict = default_config(),
         config_overrides = None,
         xml_path = new_go2_constants.UR5E_GO2_SCENE
        ):
         super().__init__(xml_path=xml_path, config=config, config_overrides=config_overrides )
+
         self._config = config
         self._n_substeps = n_substeps #int(round(ctrl_dt / sim_dt))
-        self._default_angles = default_angles
-        self._action_scale = action_scale
+        # self._default_angles = default_angles
+        # self._action_scale = action_scale
         self._counter = 0
         self.t_last_cmd = 0.0
         self.dt_new_cmd = 0.34 # HERE TBD ~1/30(vision fps)
-        self.robot_go2 = RobotGo2()
 
         self.model = self._mj_model #TODO # Access mujoco model
         self._ONNX_DIR = _ONNX_DIR
         print(" AFTER: ",self._ONNX_DIR )
+
+        self._post_init()
+
+    def _post_init(self) -> None:
+
+        self.robot_go2 = RobotGo2()
 
         # Constructor Locomotion_Controller
         self.Loc_Ctrl = Locomotion_Controller(
