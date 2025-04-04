@@ -113,10 +113,12 @@ class NavigationPolicy(go2_base.Go2NavEnv):
         self.t_last_cmd = 0.0
         self.dt_new_cmd = 0.34 # HERE TBD ~1/30(vision fps)
 
+        # MuJoCo model-data
         self.model = self._mj_model #TODO # Access mujoco model
-        self._ONNX_DIR = _ONNX_DIR
-        print(" AFTER: ",self._ONNX_DIR )
+        self.mujoco_data = mujoco.MjData(self.model)
 
+        self._ONNX_DIR = _ONNX_DIR
+        
         self._post_init()
 
     def _post_init(self) -> None:
@@ -136,12 +138,17 @@ class NavigationPolicy(go2_base.Go2NavEnv):
         vel_scale_rot=2 * np.pi,
         locomotion_cmd=np.zeros(3)) # Define which Navigator-Boss the locomotion cotroller will have.
 
+        # Policy instances
+        # self.robot_go2.
+        pos = self.mujoco_data.xpos[:]
+        print(pos)
+        # Arm
+        self.arm = Arm()
+        # Perception #TODO
+        # self.perception = Perception()  #, perception_cont
         # Added this to decide the vel Cmds: in future, it will come from Navigation Policy
         self.Navigator_ = Navigator()
-        # # Obj. under arm_mujoco
-        self.arm = Arm()
-        # self.perception = Perception()  #, perception_cont
-            # Obj. for RL control
+        
         print("NavigationPolicy: Initialized")
 
     def get_action(self, model, data) -> np.ndarray:
