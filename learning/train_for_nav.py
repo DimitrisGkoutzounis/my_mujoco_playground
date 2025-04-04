@@ -366,7 +366,7 @@ def main(argv):
 
 
 
-#   # Train or load the model
+  # Train or load the model
 #   make_inference_fn, params, _ = train_fn(  # pylint: disable=no-value-for-parameter
 #       environment=env,
 #       progress_fn=progress,

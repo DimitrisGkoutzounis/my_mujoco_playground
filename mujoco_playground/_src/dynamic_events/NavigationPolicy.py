@@ -142,6 +142,7 @@ class NavigationPolicy(go2_base.Go2NavEnv):
         # self.robot_go2.
         pos = self.mujoco_data.xpos[:]
         print(pos)
+        
         # Arm
         self.arm = Arm()
         # Perception #TODO
