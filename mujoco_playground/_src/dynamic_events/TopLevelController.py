@@ -10,7 +10,7 @@ class TopLevelController:
             #TBD: FIX THOSE DEFAULT ANGELS
             default_angles= np.zeros(6),#np.array(model.keyframe("home").qpos[top_controller.robot_go2.i_start_qpos:top_controller.robot_go2.i_end_qpos]), 
             # default_angles=np.array(model.keyframe("home").qpos[:]), 
-            # n_substeps=n_substeps,  #TBD: FIX THOSE DEFAULT N_SUBSTEPS
+            n_substeps=5,  #TBD: FIX THOSE DEFAULT N_SUBSTEPS int(round(ctrl_dt / sim_dt))
             action_scale=0.5,
 
             ############### DO NOT CHANGE THOSE - START ##############

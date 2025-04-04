@@ -35,7 +35,7 @@ def main_function(model=None, data=None):
     ##################################################
 
     ##################################################
-
+    print(type(_ONNX_DIR))
     # Set no mujoco control - default callback
     mujoco.set_mjcb_control(None)
     # Load 

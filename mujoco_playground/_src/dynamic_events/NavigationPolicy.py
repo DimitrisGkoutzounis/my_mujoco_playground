@@ -14,6 +14,7 @@ from mujoco_playground._src.dynamic_events import new_go2_constants
 
 
 from ml_collections import config_dict
+from etils import epath
 
 # NavigationPolicy Class: Defines the navigation policy, TBD
 #  Until now: it has Navigator() which decides randomly the vel cmds
@@ -94,17 +95,18 @@ class NavigationPolicy(go2_base.Go2NavEnv):
         vel_scale_y: float = 0.8,
         vel_scale_rot: float = 2 * np.pi, 
         t_last_cmd: float = 0.0,
-        ctrl_dt: float = 0.01,
-        sim_dt : float = 0.002, #model.opt.timestep
-        _ONNX_DIR = None,
+        ctrl_dt: float = 0.01, # This affect the Locomotion COntroller
+        sim_dt : float = 0.002, # model.opt.timestep
+        n_substeps : int = 5, 
+        _ONNX_DIR : epath.Path = epath.Path(__file__).parent.parent.parent / "experimental/sim2sim"/ "onnx", # Modified this (_HERE.parent.parent), two folders back before access .onnx
         model = None,
         config = None,
         config_overrides = None,
         xml_path = new_go2_constants.UR5E_GO2_SCENE
        ):
         super().__init__(xml_path=xml_path, config=config, config_overrides=config_overrides )
-        # self._config = config
-        self.n_substeps = int(round(ctrl_dt / sim_dt))
+        self._config = config
+        self._n_substeps = n_substeps #int(round(ctrl_dt / sim_dt))
         self._default_angles = default_angles
         self._action_scale = action_scale
         self._counter = 0
@@ -112,13 +114,17 @@ class NavigationPolicy(go2_base.Go2NavEnv):
         self.dt_new_cmd = 0.34 # HERE TBD ~1/30(vision fps)
         self.robot_go2 = RobotGo2()
 
+        self.model = self._mj_model #TODO # Access mujoco model
+        self._ONNX_DIR = _ONNX_DIR
+        print(" AFTER: ",self._ONNX_DIR )
+
         # Constructor Locomotion_Controller
         self.Loc_Ctrl = Locomotion_Controller(
-        locomotion_policy_path=(_ONNX_DIR / "go2_policy_galloping.onnx").as_posix(),
+        locomotion_policy_path=(self._ONNX_DIR / "go2_policy_galloping.onnx").as_posix(),
         # Pass only qpos regarding Go2's joints, NOT base's x,y,z,quat 
-        default_angles=np.array(model.keyframe("home").qpos[self.robot_go2.i_start_qpos:self.robot_go2.i_end_qpos]),
+        default_angles=np.array(self.model.keyframe("home").qpos[self.robot_go2.i_start_qpos:self.robot_go2.i_end_qpos]),
         # Pass different n_substeps if need. Works: int(round(0.01 / 0.002))
-        n_substeps=self.n_substeps, 
+        n_substeps= 5, # int(round(ctrl_dt / sim_dt)) 0.01/0.002 = 5
         action_scale=0.5,
         vel_scale_x=1.5,
         vel_scale_y=0.8,
