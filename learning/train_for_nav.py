@@ -36,7 +36,7 @@ from ml_collections import config_dict
 import mujoco
 from orbax import checkpoint as ocp
 from tensorboardX import SummaryWriter
-# import wandb
+import wandb
 
 import mujoco_playground
 from mujoco_playground import registry
@@ -221,105 +221,105 @@ def main(argv):
     
   env = registry.load(env_name, config=env_cfg) #load the environment
 
-#   print(f"Environment Config:\n{env_cfg}")
-#   print(f"PPO Training Parameters:\n{ppo_params}")
+  print(f"Environment Config:\n{env_cfg}")
+  print(f"PPO Training Parameters:\n{ppo_params}")
 
-#   # Generate unique experiment name
-#   now = datetime.now()
-#   timestamp = now.strftime("%Y%m%d-%H%M%S")
-#   exp_name = f"{_ENV_NAME.value}-{timestamp}"
-#   if _SUFFIX.value is not None:
-#     exp_name += f"-{_SUFFIX.value}"
-#   print(f"Experiment name: {exp_name}")
+  # Generate unique experiment name
+  now = datetime.now()
+  timestamp = now.strftime("%Y%m%d-%H%M%S")
+  exp_name = f"{_ENV_NAME.value}-{timestamp}"
+  if _SUFFIX.value is not None:
+    exp_name += f"-{_SUFFIX.value}"
+  print(f"Experiment name: {exp_name}")
 
-#   # Set up logging directory
-#   logdir = epath.Path("logs").resolve() / exp_name
-#   logdir.mkdir(parents=True, exist_ok=True)
-#   print(f"Logs are being stored in: {logdir}")
+  # Set up logging directory
+  logdir = epath.Path("logs").resolve() / exp_name
+  logdir.mkdir(parents=True, exist_ok=True)
+  print(f"Logs are being stored in: {logdir}")
 
-#   # Initialize Weights & Biases if required
-#   if _USE_WANDB.value and not _PLAY_ONLY.value:
-#     wandb.init(project="mjxrl", entity="dextrm", name=exp_name)
-#     wandb.config.update(env_cfg.to_dict())
-#     wandb.config.update({"env_name": _ENV_NAME.value})
+  # Initialize Weights & Biases if required
+  if _USE_WANDB.value and not _PLAY_ONLY.value:
+    wandb.init(project="mjxrl", entity="dextrm", name=exp_name)
+    wandb.config.update(env_cfg.to_dict())
+    wandb.config.update({"env_name": _ENV_NAME.value})
 
-#   # Initialize TensorBoard if required
-#   if _USE_TB.value and not _PLAY_ONLY.value:
-#     writer = SummaryWriter(logdir)
+  # Initialize TensorBoard if required
+  if _USE_TB.value and not _PLAY_ONLY.value:
+    writer = SummaryWriter(logdir)
 
-#   # Handle checkpoint loading
-#   if _LOAD_CHECKPOINT_PATH.value is not None:
-#     # Convert to absolute path
-#     ckpt_path = epath.Path(_LOAD_CHECKPOINT_PATH.value).resolve()
-#     if ckpt_path.is_dir():
-#       latest_ckpts = list(ckpt_path.glob("*"))
-#       latest_ckpts = [ckpt for ckpt in latest_ckpts if ckpt.is_dir()]
-#       latest_ckpts.sort(key=lambda x: int(x.name))
-#       latest_ckpt = latest_ckpts[-1]
-#       restore_checkpoint_path = latest_ckpt
-#       print(f"Restoring from: {restore_checkpoint_path}")
-#     else:
-#       restore_checkpoint_path = ckpt_path
-#       print(f"Restoring from checkpoint: {restore_checkpoint_path}")
-#   else:
-#     print("No checkpoint path provided, not restoring from checkpoint")
-#     restore_checkpoint_path = None
+  # Handle checkpoint loading
+  if _LOAD_CHECKPOINT_PATH.value is not None:
+    # Convert to absolute path
+    ckpt_path = epath.Path(_LOAD_CHECKPOINT_PATH.value).resolve()
+    if ckpt_path.is_dir():
+      latest_ckpts = list(ckpt_path.glob("*"))
+      latest_ckpts = [ckpt for ckpt in latest_ckpts if ckpt.is_dir()]
+      latest_ckpts.sort(key=lambda x: int(x.name))
+      latest_ckpt = latest_ckpts[-1]
+      restore_checkpoint_path = latest_ckpt
+      print(f"Restoring from: {restore_checkpoint_path}")
+    else:
+      restore_checkpoint_path = ckpt_path
+      print(f"Restoring from checkpoint: {restore_checkpoint_path}")
+  else:
+    print("No checkpoint path provided, not restoring from checkpoint")
+    restore_checkpoint_path = None
 
-#   # Set up checkpoint directory
-#   ckpt_path = logdir / "checkpoints"
-#   ckpt_path.mkdir(parents=True, exist_ok=True)
-#   print(f"Checkpoint path: {ckpt_path}")
+  # Set up checkpoint directory
+  ckpt_path = logdir / "checkpoints"
+  ckpt_path.mkdir(parents=True, exist_ok=True)
+  print(f"Checkpoint path: {ckpt_path}")
 
-#   # Save environment configuration
-#   with open(ckpt_path / "config.json", "w", encoding="utf-8") as fp:
-#     json.dump(env_cfg.to_dict(), fp, indent=4)
+  # Save environment configuration
+  with open(ckpt_path / "config.json", "w", encoding="utf-8") as fp:
+    json.dump(env_cfg.to_dict(), fp, indent=4)
 
-#   # Define policy parameters function for saving checkpoints
-#   def policy_params_fn(current_step, make_policy, params):  # pylint: disable=unused-argument
-#     orbax_checkpointer = ocp.PyTreeCheckpointer()
-#     save_args = orbax_utils.save_args_from_target(params)
-#     path = ckpt_path / f"{current_step}"
-#     orbax_checkpointer.save(path, params, force=True, save_args=save_args)
+  # Define policy parameters function for saving checkpoints
+  def policy_params_fn(current_step, make_policy, params):  # pylint: disable=unused-argument
+    orbax_checkpointer = ocp.PyTreeCheckpointer()
+    save_args = orbax_utils.save_args_from_target(params)
+    path = ckpt_path / f"{current_step}"
+    orbax_checkpointer.save(path, params, force=True, save_args=save_args)
 
-#   training_params = dict(ppo_params)
-#   if "network_factory" in training_params:
-#     del training_params["network_factory"]
+  training_params = dict(ppo_params)
+  if "network_factory" in training_params:
+    del training_params["network_factory"]
 
-#   network_fn = (
-#       ppo_networks_vision.make_ppo_networks_vision
-#       if _VISION.value
-#       else ppo_networks.make_ppo_networks
-#   )
-#   if hasattr(ppo_params, "network_factory"):
-#     network_factory = functools.partial(
-#         network_fn, **ppo_params.network_factory
-#     )
-#   else:
-#     network_factory = network_fn
+  network_fn = (
+      ppo_networks_vision.make_ppo_networks_vision
+      if _VISION.value
+      else ppo_networks.make_ppo_networks
+  )
+  if hasattr(ppo_params, "network_factory"):
+    network_factory = functools.partial(
+        network_fn, **ppo_params.network_factory
+    )
+  else:
+    network_factory = network_fn
 
-#   if _DOMAIN_RANDOMIZATION.value:
-#     training_params["randomization_fn"] = registry.get_domain_randomizer(
-#         _ENV_NAME.value
-#     )
+  if _DOMAIN_RANDOMIZATION.value:
+    training_params["randomization_fn"] = registry.get_domain_randomizer(
+        _ENV_NAME.value
+    )
 
-#   if _VISION.value:
-#     env = wrapper.wrap_for_brax_training(
-#         env,
-#         vision=True,
-#         num_vision_envs=env_cfg.vision_config.render_batch_size,
-#         episode_length=ppo_params.episode_length,
-#         action_repeat=ppo_params.action_repeat,
-#         randomization_fn=training_params.get("randomization_fn"),
-#     )
+  if _VISION.value:
+    env = wrapper.wrap_for_brax_training(
+        env,
+        vision=True,
+        num_vision_envs=env_cfg.vision_config.render_batch_size,
+        episode_length=ppo_params.episode_length,
+        action_repeat=ppo_params.action_repeat,
+        randomization_fn=training_params.get("randomization_fn"),
+    )
 
-#   num_eval_envs = (
-#       ppo_params.num_envs
-#       if _VISION.value
-#       else ppo_params.get("num_eval_envs", 128)
-#   )
+  num_eval_envs = (
+      ppo_params.num_envs
+      if _VISION.value
+      else ppo_params.get("num_eval_envs", 128)
+  )
 
-#   if "num_eval_envs" in training_params:
-#     del training_params["num_eval_envs"]
+  if "num_eval_envs" in training_params:
+    del training_params["num_eval_envs"]
 
 
 
