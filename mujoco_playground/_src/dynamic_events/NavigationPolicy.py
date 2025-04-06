@@ -207,3 +207,4 @@ class NavigationPolicy(go2_base.Go2NavEnv):
     def _get_reward(self):
         pass
     def _get_termination(self):
+        pass
