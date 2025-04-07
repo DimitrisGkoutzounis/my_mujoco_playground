@@ -1,3 +1,9 @@
+from typing import Any, Dict, Optional, Union
+
+import jax
+import jax.numpy as jp
+from mujoco import mjx
+from mujoco.mjx._src import math
 
 import mujoco
 import numpy as np
@@ -8,10 +14,10 @@ from mujoco_playground._src.dynamic_events.arm_mujoco.src.Perception import Perc
 from mujoco_playground._src.dynamic_events.Locomotion_Controller import Locomotion_Controller
 from mujoco_playground._src.dynamic_events.Navigator import Navigator
 
+from mujoco_playground._src import collision
+from mujoco_playground._src import mjx_env
 import mujoco_playground._src.dynamic_events.base as go2_base
-
 from mujoco_playground._src.dynamic_events import new_go2_constants
-
 
 from ml_collections import config_dict
 from etils import epath
@@ -31,17 +37,17 @@ def default_config() -> config_dict.ConfigDict:
       action_repeat=1,
       action_scale=0.5,
       history_len=1,
-      soft_joint_pos_limit_factor=0.95,
-      noise_config=config_dict.create(
-          level=1.0,  # Set to 0.0 to disable noise.
-          scales=config_dict.create(
-              joint_pos=0.03,
-              joint_vel=1.5,
-              gyro=0.2,
-              gravity=0.05,
-              linvel=0.1,
-          ),
-      ),
+    #   soft_joint_pos_limit_factor=0.95,
+    #   noise_config=config_dict.create(
+    #       level=1.0,  # Set to 0.0 to disable noise.
+    #       scales=config_dict.create(
+    #           joint_pos=0.03,
+    #           joint_vel=1.5,
+    #           gyro=0.2,
+    #           gravity=0.05,
+    #           linvel=0.1,
+    #       ),
+    #   ),
       reward_config=config_dict.create(
           scales=config_dict.create(
               # Tracking.
@@ -61,21 +67,21 @@ def default_config() -> config_dict.ConfigDict:
               torques=-0.0002,
               action_rate=-0.01,
               energy=-0.001,
-              # Feet.
-              feet_clearance=-2.0,
-              feet_height=-0.2,
-              feet_slip=-0.1,
-              feet_air_time=0.1,
+            #   # Feet.
+            #   feet_clearance=-2.0,
+            #   feet_height=-0.2,
+            #   feet_slip=-0.1,
+            #   feet_air_time=0.1,
           ),
           tracking_sigma=0.25,
-          max_foot_height=0.1,
+        #   max_foot_height=0.1,
       ),
-      pert_config=config_dict.create(
-          enable=False,
-          velocity_kick=[0.0, 3.0],
-          kick_durations=[0.05, 0.2],
-          kick_wait_times=[1.0, 3.0],
-      ),
+    #   pert_config=config_dict.create(
+    #       enable=False,
+    #       velocity_kick=[0.0, 3.0],
+    #       kick_durations=[0.05, 0.2],
+    #       kick_wait_times=[1.0, 3.0],
+    #   ),
       command_config=config_dict.create(
           # Uniform distribution for command amplitude.
           a=[1.5, 0.8, 1.2],
@@ -139,10 +145,13 @@ class NavigationPolicy(go2_base.Go2NavEnv):
         locomotion_cmd=np.zeros(3)) # Define which Navigator-Boss the locomotion cotroller will have.
 
         # Policy instances
-        # self.robot_go2.
-        pos = self.mujoco_data.xpos[:]
-        print(pos)
-        
+        data = mujoco.MjData(self._mj_model)
+        # Initialize Go2 pos,quat at init_*
+        self.robot_go2.get_CoM_pos(data=data)
+        self.robot_go2.init_pc =  self.robot_go2.pc
+        self.robot_go2.init_xquat =  self.robot_go2.xquat
+        print("From post_init_: robots pos = \n", self.robot_go2.init_pc) 
+
         # Arm
         self.arm = Arm()
         # Perception #TODO
@@ -168,8 +177,6 @@ class NavigationPolicy(go2_base.Go2NavEnv):
     def set_locomotion_ctrl(self, LocCtrl__):
         self.Loc_Ctrl = LocCtrl__
 
-    def reset(self, rng):
-        return super().reset(rng)
 
     def step(self, model, data):
         # print("In step")
@@ -199,12 +206,76 @@ class NavigationPolicy(go2_base.Go2NavEnv):
         # Execute the locomotion cmd
         self.Loc_Ctrl.exec_locomotion_control(model=model, data=data, robot=self.robot_go2)
 
+    def reset(self, rng: jax.Array) -> mjx_env.State:
+        xpos = self.robot_go2.init_pc # or set to []
+        xquat = self.robot_go2.init_xquat # or set to init [] manually
+        
+        rng, key = jax.random.split(rng)
+        dxy = jax.random.uniform(key, (2,), minval=-0.5, maxval=0.5)
+        xpos = xpos.at[0:2].set(xpos[0:2] + dxy)
+        # #TODO check if yaw needs also a key
+        # ???
+        # rng, key = jax.random.split(rng)
+        # yaw = jax.random.uniform(key, (1,), minval=-3.14, maxval=3.14)
+        data = mjx_env.init(self.mjx_model, xpos=xpos, xquat=xquat) #, ctrl=qpos[7:]
+
+        rng, key1, key2 = jax.random.split(rng, 3)
+        time_until_next_cmd = jax.random.exponential(key1) * 5.0
+        steps_until_next_cmd = jp.round(time_until_next_cmd / self.dt).astype(
+            jp.int32
+        )
+        cmd = jax.random.uniform(
+            key2, shape=(3,), minval=-self._cmd_a, maxval=self._cmd_a
+        )
+
+        info = {
+            "rng": rng,
+            "command": cmd,
+            "steps_until_next_cmd": steps_until_next_cmd,
+            "last_act": jp.zeros(2), # vel x,y
+            "last_last_act": jp.zeros(2),  # vel x,y
+            "last_perceive": jp.zeros(4, dtype=bool),
+            "swing_peak": jp.zeros(4),
+        }        
+        # return super().reset(rng)
+        metrics = {}
+        metrics["a_metric"] = jp.zeros(())
+
+        obs = self._get_obs(data, info)
+        reward, done = jp.zeros(2)
+        return mjx_env.State(data, obs, reward, done, metrics, info)
 
 
-    def _get_obs(self):
-        pass
-    
     def _get_reward(self):
         pass
     def _get_termination(self):
         pass
+        # Here petributions
+        # Placeholder petrubations
+
+    def _get_termination(self, data: mjx.Data) -> jax.Array:
+        fall_termination = self.get_upvector(data)[-1] < 0.0
+        return fall_termination
+
+    def _reset_if_outside_bounds(self, state: mjx_env.State) -> mjx_env.State:
+        print("Define me : _reset_if_outside_bounds")
+        pass
+
+    # Without noise 
+    # #TODO add noise
+    # #TODO dict info?
+    def _get_obs(
+             self, data: mjx.Data, info: dict[str, Any]
+    ) -> Dict[str, jax.Array]:
+        # Update state from mujoco data
+        self.robot_go2.get_CoM_pos(data)
+        # Obs stored at self.robot_go2.pc, self.robot_go2.xquat
+        robot_pos = self.robot_go2.pc
+        robot_quat = self.robot_go2.xquat
+
+        state = jp.hstack([
+            robot_pos,  # 3
+            robot_quat,  # 4
+            info["last_act"],  # 2 or 3 if yaw
+            info["command"],  # 2 or 3 if yaw
+        ])

@@ -162,28 +162,28 @@ registry.dynamic_events.ALL_ENVS
 env_name = "Go2NavigationFlatTerrain"
 
 env = registry.load(env_name)
-# env_cfg = dynamic_events.get_default_config(env_name)
+env_cfg = dynamic_events.get_default_config(env_name)
 
-# ppo_params = navigation_params.brax_ppo_config(env_name)
+ppo_params = navigation_params.brax_ppo_config(env_name)
 
 
-# def identity_observation_preprocessor(observation, preprocessor_params):
-#   del preprocessor_params
-#   return observation
+def identity_observation_preprocessor(observation, preprocessor_params):
+  del preprocessor_params
+  return observation
 
-# network_factory=functools.partial(
-#   ppo_networks.make_ppo_networks,
-#   **ppo_params.network_factory,
-#   # We need to explicitly call the normalization function here since only the brax
-#   # PPO train.py script creates it if normalize_observations is True.
-#   preprocess_observations_fn=running_statistics.normalize,
-# )
+network_factory=functools.partial(
+  ppo_networks.make_ppo_networks,
+  **ppo_params.network_factory,
+  # We need to explicitly call the normalization function here since only the brax
+  # PPO train.py script creates it if normalize_observations is True.
+  preprocess_observations_fn=running_statistics.normalize,
+)
 
-# print("ppo_params:")
-# print(ppo_params)
+print("ppo_params:")
+print(ppo_params)
 
-# obs_size = env.observation_size
-# act_size = env.action_size
+obs_size = env.observation_size
+act_size = env.action_size
 
 
 # ppo_network = network_factory(obs_size, act_size)

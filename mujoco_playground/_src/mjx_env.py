@@ -136,6 +136,8 @@ def init(
     act: Optional[jax.Array] = None,
     mocap_pos: Optional[jax.Array] = None,
     mocap_quat: Optional[jax.Array] = None,
+    xpos: Optional[jax.Array] = None,
+    xquat: Optional[jax.Array] = None,
 ) -> mjx.Data:
   """Initialize MJX Data."""
   data = mjx.make_data(model)
@@ -151,6 +153,12 @@ def init(
     data = data.replace(mocap_pos=mocap_pos.reshape(model.nmocap, -1))
   if mocap_quat is not None:
     data = data.replace(mocap_quat=mocap_quat.reshape(model.nmocap, -1))
+  if xpos is not None:
+    print("Define me: init at mjx_env.py")
+    pass
+  if xquat is not None:
+    pass
+    print("Define me: init at mjx_env.py")
   data = mjx.forward(model, data)
   return data
 
