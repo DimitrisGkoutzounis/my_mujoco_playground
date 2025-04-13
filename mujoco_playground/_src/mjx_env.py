@@ -35,12 +35,15 @@ EXTERNAL_DEPS_PATH = epath.Path(__file__).parent.parent / "external_deps"
 # The menagerie path is used to load robot assets.
 # Resource paths do not have glob implemented, so we use a bare epath.Path.
 MENAGERIE_PATH = EXTERNAL_DEPS_PATH / "mujoco_menagerie"
+
+ARM_MUJOCO_PATH = epath.Path(__file__).parent / "dynamic_events/arm_mujoco"
+
 # Commit SHA of the menagerie repo.
 MENAGERIE_COMMIT_SHA = "14ceccf557cc47240202f2354d684eca58ff8de4"
 
 
 def _clone_with_progress(
-    repo_url: str, target_path: str, commit_sha: str
+    repo_url: str, target_path: str, commit_sha: Optional[str] = None
 ) -> None:
   """Clone a git repo with progress bar."""
   process = subprocess.Popen(
@@ -107,8 +110,26 @@ def ensure_menagerie_exists() -> None:
       print(f"Error downloading mujoco_menagerie: {e}", file=sys.stderr)
       raise
 
+def ensure_arm_mujoco_exists() -> None:
+  if not ARM_MUJOCO_PATH.exists():
+      print("arm_mujoco not found. Downloading...")
+      ARM_MUJOCO_PATH.parent.mkdir(exist_ok=True, parents=True)
+      try:
+          _clone_with_progress(
+              "https://github.com/despargy/arm_mujoco.git",
+              str(ARM_MUJOCO_PATH),
+              commit_sha=None  # <-- get latest
+          )
+          print("Successfully downloaded arm_mujoco")
+      except subprocess.CalledProcessError as e:
+          print(f"Error downloading arm_mujoco: {e}", file=sys.stderr)
+          raise
+  else:
+      print("arm_mujoco found.")
+    
 
 ensure_menagerie_exists()  # Ensure menagerie exists when module is imported.
+# ensure_arm_mujoco_exists()  # Ensure arm_mujoco exists when module is imported.
 
 
 Observation = Union[jax.Array, Mapping[str, jax.Array]]
