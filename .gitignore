@@ -6,4 +6,4 @@ MUJOCO_LOG.TXT
 mujoco_menagerie
 checkpoints/
 mjx_env
-mujoco_playground/_src/dynamic_events/arm_mujoco
+# mujoco_playground/_src/dynamic_events/arm_mujoco
