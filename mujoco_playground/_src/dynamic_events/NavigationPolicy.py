@@ -212,7 +212,12 @@ class NavigationPolicy(go2_base.Go2NavEnv):
         
         rng, key = jax.random.split(rng)
         dxy = jax.random.uniform(key, (2,), minval=-0.5, maxval=0.5)
-        xpos = xpos.at[0:2].set(xpos[0:2] + dxy)
+        # xpos = xpos.at[0:2].set(xpos[0:2] + dxy)
+        xpos = jp.array(self.robot_go2.init_pc)  # Convert to a JAX array
+        xpos = xpos.at[0:2].set(xpos[0:2] + dxy)   # Use jp’s update (no np.array conversion)
+
+
+
         # #TODO check if yaw needs also a key
         # ???
         # rng, key = jax.random.split(rng)

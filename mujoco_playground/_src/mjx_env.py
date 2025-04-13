@@ -43,8 +43,7 @@ MENAGERIE_COMMIT_SHA = "14ceccf557cc47240202f2354d684eca58ff8de4"
 
 
 def _clone_with_progress(
-    repo_url: str, target_path: str, commit_sha: Optional[str] = None
-) -> None:
+    repo_url: str, target_path: str, commit_sha: str ) -> None:
   """Clone a git repo with progress bar."""
   process = subprocess.Popen(
       ["git", "clone", "--progress", repo_url, target_path],
@@ -89,6 +88,54 @@ def _clone_with_progress(
       stdout=subprocess.PIPE,
       stderr=subprocess.PIPE,
   )
+  
+  
+def _clone_arm_with_progress(
+    repo_url: str, target_path: str, commit_sha: Optional[str] = None
+) -> None:
+  """Clone a git repo with progress bar."""
+  process = subprocess.Popen(
+      ["git", "clone", "--progress", repo_url, target_path],
+      stdout=subprocess.PIPE,
+      stderr=subprocess.PIPE,
+      universal_newlines=True,
+  )
+
+  with tqdm.tqdm(
+      desc="Cloning mujoco_menagerie",
+      bar_format="{desc}: {bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]",
+  ) as pbar:
+    pbar.total = 100  # Set to 100 for percentage-based progress.
+    current = 0
+    while True:
+      # Read output line by line.
+      output = process.stderr.readline()  # pytype: disable=attribute-error
+      if not output and process.poll() is not None:
+        break
+      if output:
+        if "Receiving objects:" in output:
+          try:
+            percent = int(output.split("%")[0].split(":")[-1].strip())
+            if percent > current:
+              pbar.update(percent - current)
+              current = percent
+          except (ValueError, IndexError):
+            pass
+
+    # Ensure the progress bar reaches 100%.
+    if current < 100:
+      pbar.update(100 - current)
+
+  if process.returncode != 0:
+    raise subprocess.CalledProcessError(process.returncode, ["git", "clone"])
+
+  if commit_sha:
+    subprocess.run(
+        ["git", "-C", target_path, "checkout", commit_sha],
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+  )
 
 
 def ensure_menagerie_exists() -> None:
@@ -115,7 +162,7 @@ def ensure_arm_mujoco_exists() -> None:
       print("arm_mujoco not found. Downloading...")
       ARM_MUJOCO_PATH.parent.mkdir(exist_ok=True, parents=True)
       try:
-          _clone_with_progress(
+          _clone_arm_with_progress(
               "https://github.com/despargy/arm_mujoco.git",
               str(ARM_MUJOCO_PATH),
               commit_sha=None  # <-- get latest
