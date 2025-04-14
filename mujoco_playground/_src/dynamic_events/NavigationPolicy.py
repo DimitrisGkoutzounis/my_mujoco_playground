@@ -11,6 +11,8 @@ import numpy as np
 from mujoco_playground._src.dynamic_events.arm_mujoco.src.Robot  import RobotGo2
 from mujoco_playground._src.dynamic_events.arm_mujoco.src.Arm  import Arm
 from mujoco_playground._src.dynamic_events.arm_mujoco.src.Perception import Perception
+
+
 from mujoco_playground._src.dynamic_events.Locomotion_Controller import Locomotion_Controller
 from mujoco_playground._src.dynamic_events.Navigator import Navigator
 
@@ -92,7 +94,7 @@ def default_config() -> config_dict.ConfigDict:
 
 
 
-class NavigationPolicy:#(go2_base.Go2NavEnv):
+class NavigationPolicy(go2_base.Go2NavEnv):
     def __init__(
         self,
         # default_angles: np.ndarray = np.zeros(3),
@@ -109,7 +111,7 @@ class NavigationPolicy:#(go2_base.Go2NavEnv):
         config_overrides = None,
         xml_path = new_go2_constants.UR5E_GO2_SCENE
        ):
-        # super().__init__(xml_path=xml_path, config=config, config_overrides=config_overrides )
+        super().__init__(xml_path=xml_path, config=config, config_overrides=config_overrides )
 
         self._config = config
         self._n_substeps = n_substeps #int(round(ctrl_dt / sim_dt))
@@ -155,7 +157,7 @@ class NavigationPolicy:#(go2_base.Go2NavEnv):
         # Arm
         self.arm = Arm()
         # Perception #TODO
-        # self.perception = Perception()  #, perception_cont
+        self.perception = Perception()  #, perception_cont
         # Added this to decide the vel Cmds: in future, it will come from Navigation Policy
         self.Navigator_ = Navigator()
         
@@ -244,11 +246,26 @@ class NavigationPolicy:#(go2_base.Go2NavEnv):
         return mjx_env.State(data, obs, reward, done, metrics, info)
 
     def reset(self, rng: jax.Array) -> mjx_env.State:
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         xpos = self.robot_go2.init_pc # or set to []
         xquat = self.robot_go2.init_xquat # or set to init [] manually
         
         rng, key = jax.random.split(rng)
         dxy = jax.random.uniform(key, (2,), minval=-0.5, maxval=0.5)
+        xpos = jp.array(xpos)
         xpos = xpos.at[0:2].set(xpos[0:2] + dxy)
         # #TODO check if yaw needs also a key
         # ???
@@ -261,6 +278,10 @@ class NavigationPolicy:#(go2_base.Go2NavEnv):
         steps_until_next_cmd = jp.round(time_until_next_cmd / self.dt).astype(
             jp.int32
         )
+        
+        self._cmd_a = jp.array(self._config.command_config.a)
+        self._cmd_b = jp.array(self._config.command_config.b)
+        
         cmd = jax.random.uniform(
             key2, shape=(3,), minval=-self._cmd_a, maxval=self._cmd_a
         )
