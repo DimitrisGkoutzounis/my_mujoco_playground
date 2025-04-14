@@ -11,7 +11,7 @@ import numpy as np
 from mujoco_playground._src.dynamic_events.arm_mujoco.src.Robot  import RobotGo2
 from mujoco_playground._src.dynamic_events.arm_mujoco.src.Arm  import Arm
 from mujoco_playground._src.dynamic_events.arm_mujoco.src.Perception import Perception
-
+from mujoco_playground._src.dynamic_events.arm_mujoco.src.ConfigurationGenerator import ConfigGenerator
 
 from mujoco_playground._src.dynamic_events.Locomotion_Controller import Locomotion_Controller
 from mujoco_playground._src.dynamic_events.Navigator import Navigator
@@ -31,25 +31,16 @@ from etils import epath
 # TBD: fix default_config
 def default_config() -> config_dict.ConfigDict:
   return config_dict.create(
-      ctrl_dt=0.01,
-      sim_dt=0.002,
+      ctrl_dt=3, #was 0.01
+      sim_dt=0.01, #was 0.002
       episode_length=1000,
       Kp=35.0,
       Kd=0.5,
       action_repeat=1,
       action_scale=0.5,
       history_len=1,
-    #   soft_joint_pos_limit_factor=0.95,
-    #   noise_config=config_dict.create(
-    #       level=1.0,  # Set to 0.0 to disable noise.
-    #       scales=config_dict.create(
-    #           joint_pos=0.03,
-    #           joint_vel=1.5,
-    #           gyro=0.2,
-    #           gravity=0.05,
-    #           linvel=0.1,
-    #       ),
-    #   ),
+      
+      
       reward_config=config_dict.create(
           scales=config_dict.create(
               # Tracking.
@@ -69,21 +60,9 @@ def default_config() -> config_dict.ConfigDict:
               torques=-0.0002,
               action_rate=-0.01,
               energy=-0.001,
-            #   # Feet.
-            #   feet_clearance=-2.0,
-            #   feet_height=-0.2,
-            #   feet_slip=-0.1,
-            #   feet_air_time=0.1,
           ),
           tracking_sigma=0.25,
-        #   max_foot_height=0.1,
       ),
-    #   pert_config=config_dict.create(
-    #       enable=False,
-    #       velocity_kick=[0.0, 3.0],
-    #       kick_durations=[0.05, 0.2],
-    #       kick_wait_times=[1.0, 3.0],
-    #   ),
       command_config=config_dict.create(
           # Uniform distribution for command amplitude.
           a=[1.5, 0.8, 1.2],
@@ -158,7 +137,9 @@ class NavigationPolicy(go2_base.Go2NavEnv):
         self.arm = Arm()
         # Perception #TODO
         self.perception = Perception()  #, perception_cont
-        # Added this to decide the vel Cmds: in future, it will come from Navigation Policy
+        
+        self.condfig_generator = ConfigGenerator(data=self.mujoco_data, model=self.model) 
+        
         self.Navigator_ = Navigator()
         
         print("NavigationPolicy: Initialized")
@@ -247,31 +228,33 @@ class NavigationPolicy(go2_base.Go2NavEnv):
 
     def reset(self, rng: jax.Array) -> mjx_env.State:
         
+        # Get arm's CoM position and generate a new config
+        arm_pos_quat, _ = self.arm.get_CoM_pos(self.mujoco_data)
         
+        #get the new config from the generator
+        new_go2_config, _ = self.generator.generate_config(arm_pos_quat=arm_pos_quat)
+
+        # Apply new configuration to Go2, and set the go2 to the mujoco
+        self.robot_go2.set_CoM_pos(self.mujoco_data, config=new_go2_config)
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        xpos = self.robot_go2.init_pc # or set to []
-        xquat = self.robot_go2.init_xquat # or set to init [] manually
+                
+        xpos = self.robot_go2.pc # or set to []
+        xquat = self.robot_go2.xquat # or set to init [] manually
         
         rng, key = jax.random.split(rng)
         dxy = jax.random.uniform(key, (2,), minval=-0.5, maxval=0.5)
         xpos = jp.array(xpos)
         xpos = xpos.at[0:2].set(xpos[0:2] + dxy)
+        
+        
         # #TODO check if yaw needs also a key
         # ???
         # rng, key = jax.random.split(rng)
         # yaw = jax.random.uniform(key, (1,), minval=-3.14, maxval=3.14)
         data = mjx_env.init(self.mjx_model, xpos=xpos, xquat=xquat) #, ctrl=qpos[7:]
+        
+        
+        input("Wait here")
 
         rng, key1, key2 = jax.random.split(rng, 3)
         time_until_next_cmd = jax.random.exponential(key1) * 5.0
