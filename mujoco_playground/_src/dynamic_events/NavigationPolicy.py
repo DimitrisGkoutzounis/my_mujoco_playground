@@ -138,7 +138,7 @@ class NavigationPolicy(go2_base.Go2NavEnv):
         # Perception #TODO
         self.perception = Perception()  #, perception_cont
         
-        self.condfig_generator = ConfigGenerator(data=self.mujoco_data, model=self.model) 
+        self.config_generator = ConfigGenerator(data=self.mujoco_data, model=self.model) 
         
         self.Navigator_ = Navigator()
         
@@ -231,9 +231,11 @@ class NavigationPolicy(go2_base.Go2NavEnv):
         # Get arm's CoM position and generate a new config
         arm_pos_quat, _ = self.arm.get_CoM_pos(self.mujoco_data)
         
+        self.config_generator.set_arm_position(arm_pos_quat=arm_pos_quat)
+        
         #get the new config from the generator
-        new_go2_config, _ = self.generator.generate_config(arm_pos_quat=arm_pos_quat)
-
+        new_go2_config, _ = self.config_generator.generate_config(min_clearance=0.8)
+        
         # Apply new configuration to Go2, and set the go2 to the mujoco
         self.robot_go2.set_CoM_pos(self.mujoco_data, config=new_go2_config)
         
