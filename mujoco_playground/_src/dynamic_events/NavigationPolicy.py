@@ -92,7 +92,7 @@ def default_config() -> config_dict.ConfigDict:
 
 
 
-class NavigationPolicy(go2_base.Go2NavEnv):
+class NavigationPolicy:#(go2_base.Go2NavEnv):
     def __init__(
         self,
         # default_angles: np.ndarray = np.zeros(3),
@@ -109,7 +109,7 @@ class NavigationPolicy(go2_base.Go2NavEnv):
         config_overrides = None,
         xml_path = new_go2_constants.UR5E_GO2_SCENE
        ):
-        super().__init__(xml_path=xml_path, config=config, config_overrides=config_overrides )
+        # super().__init__(xml_path=xml_path, config=config, config_overrides=config_overrides )
 
         self._config = config
         self._n_substeps = n_substeps #int(round(ctrl_dt / sim_dt))
@@ -179,6 +179,16 @@ class NavigationPolicy(go2_base.Go2NavEnv):
 
 
     def step(self, model, data):
+        
+        
+        
+        #many times. 
+        
+        
+        # low_level_ste()
+        
+        
+        
         # print("In step")
         # print("Data time", data.time)
         # print("t_last_cmd", self.t_last_cmd)

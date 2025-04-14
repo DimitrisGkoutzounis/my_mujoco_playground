@@ -61,7 +61,7 @@ def main(model=None, data=None):
   mujoco.mj_resetDataKeyframe(model, data, 0)
 
   ctrl_dt = 0.02 #50Hz
-  sim_dt = 0.004 #250Hz
+  sim_dt = 0.001 #250Hz
   n_substeps = int(round(ctrl_dt / sim_dt)) #for each control step, how many simulation steps are taken(5 in this case)
   model.opt.timestep = sim_dt # set the simulation timestep
 

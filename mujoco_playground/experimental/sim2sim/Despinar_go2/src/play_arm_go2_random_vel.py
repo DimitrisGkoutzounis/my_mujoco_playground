@@ -69,9 +69,9 @@ def main_function(model=None, data=None):
 
 
     # Define params
-    ctrl_dt = 0.02
-    sim_dt =  model.opt.timestep # 0.004
-    n_substeps = int(round(ctrl_dt / sim_dt))
+    ctrl_dt = 0.002
+    sim_dt =  model.opt.timestep # 0.002
+    n_substeps = 1#int(round(ctrl_dt / sim_dt))
 
     
     # Top Level Controller - Controls EVERYTHING
