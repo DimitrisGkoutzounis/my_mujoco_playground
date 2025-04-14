@@ -206,6 +206,33 @@ class NavigationPolicy(go2_base.Go2NavEnv):
         # Execute the locomotion cmd
         self.Loc_Ctrl.exec_locomotion_control(model=model, data=data, robot=self.robot_go2)
 
+        info = {
+            "t_last_cmd": self.t_last_cmd,
+            "sim_time": data.time,
+            "locomotion_cmd": self.Loc_Ctrl.locomotion_cmd,
+        }
+
+        # Generate the observation.
+        # The _get_obs function stacks the robot's position, orientation, last action and command.
+        obs = self._get_obs(data, info)
+
+        # Placeholder for reward computation. In the future, we compute the reward based on tracking,
+        # obstacle avoidance, view quality of the arm etc.
+        reward = jp.array(0.0)
+
+        # Check for termination. For instance, if the robot has fallen over (its up vector has a negative z-component).
+        done = self._get_termination(data)
+
+        # Collect additional metrics, if desired.
+        metrics = {
+            "sim_time": data.time,
+            "t_last_cmd": self.t_last_cmd,
+            "locomotion_cmd": self.Loc_Ctrl.locomotion_cmd,
+        }
+
+        # Return the new state with updated data, observation, reward, termination flag, metrics, and info.
+        return mjx_env.State(data, obs, reward, done, metrics, info)
+
     def reset(self, rng: jax.Array) -> mjx_env.State:
         xpos = self.robot_go2.init_pc # or set to []
         xquat = self.robot_go2.init_xquat # or set to init [] manually
@@ -246,20 +273,123 @@ class NavigationPolicy(go2_base.Go2NavEnv):
         return mjx_env.State(data, obs, reward, done, metrics, info)
 
 
-    def _get_reward(self):
-        pass
-    def _get_termination(self):
-        pass
-        # Here petributions
-        # Placeholder petrubations
+    def _get_reward(self, model: mujoco.MjModel, data: mujoco.MjData) -> jax.Array:
+        # --- Tracking Reward ---
+        # Get the measured linear and angular velocities from the sensors.
+        # 'local_linvel' should be a 3D vector [v_x, v_y, v_z].
+        local_linvel = data.sensor("local_linvel").data  # e.g. using Mujoco sensor
+        # 'gyro' is assumed to provide angular velocities; we take the yaw (last element).
+        local_gyro = data.sensor("gyro").data
 
-    def _get_termination(self, data: mjx.Data) -> jax.Array:
-        fall_termination = self.get_upvector(data)[-1] < 0.0
-        return fall_termination
+        # Desired velocities come from the locomotion controller command.
+        desired_cmd = self.Loc_Ctrl.locomotion_cmd
+        # Compute the error (Euclidean norm) for the linear velocities (v_x and v_y).
+        error_lin = jp.linalg.norm(local_linvel[:2] - desired_cmd[:2])
+        # For the angular velocity (yaw rate) measure absolute error.
+        error_ang = jp.abs(local_gyro[-1] - desired_cmd[2])
 
-    def _reset_if_outside_bounds(self, state: mjx_env.State) -> mjx_env.State:
-        print("Define me : _reset_if_outside_bounds")
-        pass
+        # Use scales provided in the configuration.
+        reward_tracking = (
+            self._config.reward_config.scales.tracking_lin_vel * (-error_lin) +
+            self._config.reward_config.scales.tracking_ang_vel * (-error_ang)
+        )
+
+        # --- Orientation Reward ---
+        # Encourage the robot to maintain an upright posture.
+        upvec = self.get_upvector(data)  # assumed to return a vector (e.g., [u_x, u_y, u_z])
+        reward_orientation = self._config.reward_config.scales.orientation * upvec[-1]
+
+        # --- Perception-Based Reward ---
+        # If a perception module is integrated, use it to evaluate the quality of the arm's view
+        # and to measure the proximity of obstacles.
+        reward_perception = 0.0
+        if hasattr(self, "perception"):
+            # Assume get_obstacle_info returns a dictionary with keys such as:
+            # "arm_view_score": how good the view is for observing the arm.
+            # "nearest_obstacle_dist": the distance to the closest obstacle.
+            obs_info = self.perception.get_obstacle_info(model=model, data=data)
+            # Extract values with safe defaults.
+            arm_view_score = obs_info.get("arm_view_score", 0.0)
+            nearest_dist = obs_info.get("nearest_obstacle_dist", 1.0)  # assume ≥1.0 is safe
+
+            # Reward good view score; here, we reuse a scale, but you can add a separate one.
+            reward_perception += self._config.reward_config.scales.pose * arm_view_score
+
+            # Penalize if too close to obstacles.
+            if nearest_dist < 0.5:
+                reward_perception += self._config.reward_config.scales.dof_pos_limits * (nearest_dist - 0.5)
+
+        # --- Control Effort Penalty ---
+        # Sum absolute actuator forces to penalize excessive control effort.
+        total_torque = jp.sum(jp.abs(data.actuator_force))
+        reward_torque = self._config.reward_config.scales.torques * total_torque
+
+        # --- Stand-Still Penalty ---
+        # Penalize if the robot's planar speed is too low (e.g., to avoid trivial stand-still solutions).
+        stand_still_penalty = 0.0
+        if jp.linalg.norm(local_linvel[:2]) < 0.01:
+            stand_still_penalty = self._config.reward_config.scales.stand_still
+
+        # --- Combine Reward Terms ---
+        reward = reward_tracking + reward_orientation + reward_perception + reward_torque + stand_still_penalty
+
+        return reward
+
+    def _get_termination(self, data: mujoco.MjData) -> jax.Array:
+        
+        # Determine if the current episode should be terminated.
+        
+        # --- Fall Termination ---
+        # Retrieve the robot's up vector (assumed that self.get_upvector(data) returns [u_x, u_y, u_z]).
+        up_vec = self.get_upvector(data)
+        # We define a fall if the z-component of the up vector is below 0.5.
+        fall_termination = up_vec[-1] < 0.5  # Adjust the threshold when tuning.
+
+        # --- Out-of-Bounds Termination ---
+        # Obtain the robot's current center-of-mass position.
+        com_pos = self.robot_go2.pc
+        # Define the environment boundaries for the x and y coordinates.
+        bounds_min = -6.0
+        bounds_max = 6.0
+        # Check if either the x or y position is outside the defined boundaries.
+        out_of_bounds = jp.any((com_pos[:2] < bounds_min) | (com_pos[:2] > bounds_max))
+
+        # --- Collision-Based Termination ---
+        # If a collision detection method is provided, use it to determine critical collision termination.
+        # The function collision.has_critical_collision(data) should return True if a critical collision has occurred.
+        if hasattr(collision, "has_critical_collision"):
+            collision_termination = collision.has_critical_collision(data)
+        else:
+            collision_termination = False
+
+        # --- Combine Termination Conditions ---
+        # If any one of the conditions is met, the episode should terminate.
+        terminated = fall_termination or out_of_bounds or collision_termination
+
+        # Return the termination flag as a JAX array.
+        return jp.array(terminated)
+
+
+    def has_critical_collision(data: mujoco.MjData) -> bool:
+        # Checks for critical collisions by examining the contact penetration depth
+        # between bodies in the simulation.
+
+        # Define a threshold for what constitutes a severe penetration.
+        # For example, any contact with a penetration deeper than 0.02 (i.e., contact.dist < -0.02)
+        # is treated as a critical collision.
+        CRITICAL_PENETRATION_THRESHOLD = -0.02
+
+        # Iterate over all current contacts.
+        for i in range(data.ncon):
+            contact = data.contact[i]
+            # The 'dist' attribute represents the distance between surfaces:
+            # a negative value indicates penetration.
+            if contact.dist < CRITICAL_PENETRATION_THRESHOLD:
+                return True
+
+        # No critical contacts were detected.
+        return False
+
 
     # Without noise 
     # #TODO add noise
