@@ -182,8 +182,53 @@ network_factory=functools.partial(
 print("ppo_params:")
 print(ppo_params)
 
-obs_size = env.observation_size
-act_size = env.action_size
+
+# The video is being saved
+render_every = 2
+fps = 30.0 #/ env.dt / render_every
+traj = []#rollout[::render_every]
+mod_fns = 1#modify_scene_fns[::render_every]
+
+scene_option = mujoco.MjvOption()
+scene_option.geomgroup[2] = True
+scene_option.geomgroup[3] = False
+scene_option.flags[mujoco.mjtVisFlag.mjVIS_CONTACTPOINT] = True
+scene_option.flags[mujoco.mjtVisFlag.mjVIS_TRANSPARENT] = False
+scene_option.flags[mujoco.mjtVisFlag.mjVIS_PERTFORCE] = True
+
+frames = env.render(
+    traj,
+    camera="track",
+    scene_option=scene_option,
+    width=640,
+    height=480,
+    modify_scene_fns=mod_fns,
+)
+
+print(frames)
+import cv2
+frames_mat = cv2.UMat(np.array(frames[0], dtype=np.uint8))
+print(type(frames_mat))
+
+
+cv2.imshow(frames_mat)
+cv2.waitKey(10)
+
+# video_output_path = "./vid_go2/"
+# os.makedirs(video_output_path, exist_ok=True)  # Create the directory if it doesn't exist
+
+# # Set video filename
+# video_filename = os.path.join(video_output_path, "simulation_output.mp4")
+
+# # Save the video locally instead of displaying it
+# media.write_video(video_filename, frames, fps=fps)
+
+# print(f"Video saved at: {video_filename}")
+
+
+
+# obs_size = env.observation_size
+# act_size = env.action_size
 
 
 # ppo_network = network_factory(obs_size, act_size)
@@ -308,6 +353,8 @@ act_size = env.action_size
 # velocity_kick_range = [0.0, 0.0]  # Disable velocity kick.
 # kick_duration_range = [0.05, 0.2]
 
+jit_reset = jax.jit(env.reset) #TODO
+
 # jit_reset = jax.jit(eval_env.reset)
 # jit_step = jax.jit(eval_env.step)
 # jit_inference_fn = jax.jit(make_inference_fn(params, deterministic=True))
@@ -336,8 +383,8 @@ act_size = env.action_size
 #   state.info["pert_duration_seconds"] = duration_seconds
 #   return rng
 
-# rng = jax.random.PRNGKey(0)
-# rollout = []
+rng = jax.random.PRNGKey(0)
+rollout = []
 # modify_scene_fns = []
 
 # swing_peak = []
@@ -350,7 +397,7 @@ act_size = env.action_size
 # contact = []
 # command = jp.array([x_vel, y_vel, yaw_vel])
 
-# state = jit_reset(rng)
+state = jit_reset(rng)
 # if state.info["steps_since_last_pert"] < state.info["steps_until_next_pert"]:
 #   rng = sample_pert(rng)
 # state.info["command"] = command
@@ -364,7 +411,7 @@ act_size = env.action_size
 #   rews.append(
 #       {k: v for k, v in state.metrics.items() if k.startswith("reward/")}
 #   )
-#   rollout.append(state)
+rollout.append(state)
 #   swing_peak.append(state.info["swing_peak"])
 #   rewards.append(
 #       {k[7:]: v for k, v in state.metrics.items() if k.startswith("reward/")}
