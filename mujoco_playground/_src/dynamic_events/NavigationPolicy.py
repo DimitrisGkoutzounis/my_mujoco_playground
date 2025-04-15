@@ -31,8 +31,8 @@ from etils import epath
 # TBD: fix default_config
 def default_config() -> config_dict.ConfigDict:
   return config_dict.create(
-      ctrl_dt=3, #was 0.01
-      sim_dt=0.01, #was 0.002
+      ctrl_dt=3, #was 0.01 same as step period
+      sim_dt=0.01, #was 0.002 low level control = loc_dt = arm_dt = sim_dt
       episode_length=1000,
       Kp=35.0,
       Kd=0.5,
@@ -81,10 +81,12 @@ class NavigationPolicy(go2_base.Go2NavEnv):
         # vel_scale_x: float = 1.5,
         # vel_scale_y: float = 0.8,
         # vel_scale_rot: float = 2 * np.pi, 
-        t_last_cmd: float = 0.0,
-        ctrl_dt: float = 0.01, # This affect the Locomotion COntroller
-        sim_dt : float = 0.002, # model.opt.timestep
-        n_substeps : int = 5, 
+        # t_last_cmd: float = 0.0,
+        # ctrl_dt: float = 0.02, # This affect the Locomotion COntroller, was 0.01
+        # sim_dt : float = 0.002, # model.opt.timestep
+        # n_substeps : int = 5,
+        
+         
         _ONNX_DIR : epath.Path = epath.Path(__file__).parent.parent.parent / "experimental/sim2sim"/ "onnx", # Modified this (_HERE.parent.parent), two folders back before access .onnx
         config: config_dict.ConfigDict = default_config(),
         config_overrides = None,
@@ -92,17 +94,13 @@ class NavigationPolicy(go2_base.Go2NavEnv):
        ):
         super().__init__(xml_path=xml_path, config=config, config_overrides=config_overrides )
 
-        self._config = config
-        self._n_substeps = n_substeps #int(round(ctrl_dt / sim_dt))
+        # self._config = config
+        # self._n_substeps = n_substeps #int(round(ctrl_dt / sim_dt))
         # self._default_angles = default_angles
         # self._action_scale = action_scale
-        self._counter = 0
-        self.t_last_cmd = 0.0
-        self.dt_new_cmd = 0.34 # HERE TBD ~1/30(vision fps)
-
-        # MuJoCo model-data
-        self.model = self._mj_model #TODO # Access mujoco model
-        self.mujoco_data = mujoco.MjData(self.model)
+        # # MuJoCo model-data
+        # self.model = self._mj_model #TODO # Access mujoco model
+        # self.mujoco_data = mujoco.MjData(self.model)
 
         self._ONNX_DIR = _ONNX_DIR
         
@@ -110,13 +108,21 @@ class NavigationPolicy(go2_base.Go2NavEnv):
 
     def _post_init(self) -> None:
 
+        self._counter = 0
+        self.t_last_cmd = 0.0
+        self.dt_new_cmd = 0.34 # HERE TBD ~1/30(vision fps)
+
+        # create the robot
         self.robot_go2 = RobotGo2()
+        
+        default_go2_joints = jp.array(self._mj_model.keyframe("home").qpos[self.robot_go2.i_start_qpos:self.robot_go2.i_end_qpos])
 
         # Constructor Locomotion_Controller
         self.Loc_Ctrl = Locomotion_Controller(
         locomotion_policy_path=(self._ONNX_DIR / "go2_policy_galloping.onnx").as_posix(),
+        
         # Pass only qpos regarding Go2's joints, NOT base's x,y,z,quat 
-        default_angles=np.array(self.model.keyframe("home").qpos[self.robot_go2.i_start_qpos:self.robot_go2.i_end_qpos]),
+        default_angles=default_go2_joints,
         # Pass different n_substeps if need. Works: int(round(0.01 / 0.002))
         n_substeps= 5, # int(round(ctrl_dt / sim_dt)) 0.01/0.002 = 5
         action_scale=0.5,
@@ -127,6 +133,8 @@ class NavigationPolicy(go2_base.Go2NavEnv):
 
         # Policy instances
         data = mujoco.MjData(self._mj_model)
+        
+        
         # Initialize Go2 pos,quat at init_*
         self.robot_go2.get_CoM_pos(data=data)
         self.robot_go2.init_pc =  self.robot_go2.pc
@@ -138,7 +146,7 @@ class NavigationPolicy(go2_base.Go2NavEnv):
         # Perception #TODO
         self.perception = Perception()  #, perception_cont
         
-        self.config_generator = ConfigGenerator(data=self.mujoco_data, model=self.model) 
+        self.config_generator = ConfigGenerator(data=data, model=self._mj_model) 
         
         self.Navigator_ = Navigator()
         
@@ -161,43 +169,21 @@ class NavigationPolicy(go2_base.Go2NavEnv):
         self.Loc_Ctrl = LocCtrl__
 
 
+
+
+
     def step(self, model, data):
         
         
         
         #many times. 
         
-        
         # low_level_ste()
-        
-        
         
         # print("In step")
         # print("Data time", data.time)
         # print("t_last_cmd", self.t_last_cmd)
         # print("dt_new_cmd", self.dt_new_cmd)
-
-        # Set new vel cmd per dt_new_cmd
-        if (data.time - self.t_last_cmd) >= self.dt_new_cmd:
-            print("New cmd at:",data.time)
-
-    #################################################################
-            # Update locomotion cmd, from whatever(in random) the Navigator decides
-            # TBD: replace navigator from you policy decision
-            self.Loc_Ctrl.update_locomotion_cmd(self.Navigator_.generate_command_norot()) 
-    #################################################################
-
-            # Reset t_last_cmd 
-            self.t_last_cmd = data.time
-
-        # Move arm
-        self.arm.control_Cb(model=model, data=data)
-        
-        # Perceive
-        # self.perception.get_rgbd_auto_AOI(model=model, data=data, perception_context=self.context)
-        
-        # Execute the locomotion cmd
-        self.Loc_Ctrl.exec_locomotion_control(model=model, data=data, robot=self.robot_go2)
 
         info = {
             "t_last_cmd": self.t_last_cmd,
@@ -228,16 +214,6 @@ class NavigationPolicy(go2_base.Go2NavEnv):
 
     def reset(self, rng: jax.Array) -> mjx_env.State:
         
-        # Get arm's CoM position and generate a new config
-        arm_pos_quat, _ = self.arm.get_CoM_pos(self.mujoco_data)
-        
-        self.config_generator.set_arm_position(arm_pos_quat=arm_pos_quat)
-        
-        #get the new config from the generator
-        new_go2_config, _ = self.config_generator.generate_config(min_clearance=0.8)
-        
-        # Apply new configuration to Go2, and set the go2 to the mujoco
-        self.robot_go2.set_CoM_pos(self.mujoco_data, config=new_go2_config)
         
                 
         xpos = self.robot_go2.pc # or set to []
@@ -255,6 +231,16 @@ class NavigationPolicy(go2_base.Go2NavEnv):
         # yaw = jax.random.uniform(key, (1,), minval=-3.14, maxval=3.14)
         data = mjx_env.init(self.mjx_model, xpos=xpos, xquat=xquat) #, ctrl=qpos[7:]
         
+        # Get arm's CoM position and generate a new config
+        arm_pos_quat, _ = self.arm.get_CoM_pos(data)
+        
+        self.config_generator.set_arm_position(arm_pos_quat=arm_pos_quat)
+        
+        #get the new config from the generator
+        new_go2_config, _ = self.config_generator.generate_config(min_clearance=0.8)
+        
+        # Apply new configuration to Go2, and set the go2 to the mujoco
+        self.robot_go2.set_CoM_pos(self.mujoco_data, config=new_go2_config)
         
         input("Wait here")
 
@@ -425,3 +411,36 @@ class NavigationPolicy(go2_base.Go2NavEnv):
             info["last_act"],  # 2 or 3 if yaw
             info["command"],  # 2 or 3 if yaw
         ])
+        
+        
+        
+    def _low_level_step(self,data,model):
+        
+        
+        
+        
+        
+        # Set new vel cmd per dt_new_cmd
+        if (data.time - self.t_last_cmd) >= self.dt_new_cmd:
+            print("New cmd at:",data.time)
+
+    #################################################################
+            # Update locomotion cmd, from whatever(in random) the Navigator decides
+            # TBD: replace navigator from you policy decision
+            self.Loc_Ctrl.update_locomotion_cmd(self.Navigator_.generate_command_norot()) 
+    #################################################################
+
+            # Reset t_last_cmd 
+            self.t_last_cmd = data.time
+
+        # Move arm
+        self.arm.control_Cb(model=model, data=data)
+        
+        # Perceive
+        # self.perception.get_rgbd_auto_AOI(model=model, data=data, perception_context=self.context)
+        
+        # Execute the locomotion cmd
+        self.Loc_Ctrl.exec_locomotion_control(model=model, data=data, robot=self.robot_go2)
+
+        
+        pass
