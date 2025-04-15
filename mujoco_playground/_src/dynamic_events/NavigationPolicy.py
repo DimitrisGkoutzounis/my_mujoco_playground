@@ -11,7 +11,7 @@ import numpy as np
 from mujoco_playground._src.dynamic_events.arm_mujoco.src.Robot  import RobotGo2
 from mujoco_playground._src.dynamic_events.arm_mujoco.src.Arm  import Arm
 from mujoco_playground._src.dynamic_events.arm_mujoco.src.Perception import Perception
-from mujoco_playground._src.dynamic_events.arm_mujoco.src.ConfigurationGenerator import ConfigGenerator
+from mujoco_playground._src.dynamic_events.arm_mujoco.src.ConfigurationGenerator_jax import ConfigGenerator
 
 from mujoco_playground._src.dynamic_events.Locomotion_Controller import Locomotion_Controller
 from mujoco_playground._src.dynamic_events.Navigator import Navigator
