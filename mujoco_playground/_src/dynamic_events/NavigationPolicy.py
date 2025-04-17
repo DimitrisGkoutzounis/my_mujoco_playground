@@ -242,6 +242,8 @@ class NavigationPolicy(go2_base.Go2NavEnv):
         # Apply new configuration to Go2, and set the go2 to the mujoco
         self.robot_go2.set_CoM_pos(self.mujoco_data, config=new_go2_config)
         
+       
+        
         input("Wait here")
 
         rng, key1, key2 = jax.random.split(rng, 3)

@@ -183,36 +183,36 @@ print("ppo_params:")
 print(ppo_params)
 
 
-# The video is being saved
-render_every = 2
-fps = 30.0 #/ env.dt / render_every
-traj = []#rollout[::render_every]
-mod_fns = 1#modify_scene_fns[::render_every]
+# # The video is being saved
+# render_every = 2
+# fps = 30.0 #/ env.dt / render_every
+# traj = []#rollout[::render_every]
+# mod_fns = 1#modify_scene_fns[::render_every]
 
-scene_option = mujoco.MjvOption()
-scene_option.geomgroup[2] = True
-scene_option.geomgroup[3] = False
-scene_option.flags[mujoco.mjtVisFlag.mjVIS_CONTACTPOINT] = True
-scene_option.flags[mujoco.mjtVisFlag.mjVIS_TRANSPARENT] = False
-scene_option.flags[mujoco.mjtVisFlag.mjVIS_PERTFORCE] = True
+# scene_option = mujoco.MjvOption()
+# scene_option.geomgroup[2] = True
+# scene_option.geomgroup[3] = False
+# scene_option.flags[mujoco.mjtVisFlag.mjVIS_CONTACTPOINT] = True
+# scene_option.flags[mujoco.mjtVisFlag.mjVIS_TRANSPARENT] = False
+# scene_option.flags[mujoco.mjtVisFlag.mjVIS_PERTFORCE] = True
 
-frames = env.render(
-    traj,
-    camera="track",
-    scene_option=scene_option,
-    width=640,
-    height=480,
-    modify_scene_fns=mod_fns,
-)
+# frames = env.render(
+#     traj,
+#     camera="track",
+#     scene_option=scene_option,
+#     width=640,
+#     height=480,
+#     modify_scene_fns=mod_fns,
+# )
 
-print(frames)
-import cv2
-frames_mat = cv2.UMat(np.array(frames[0], dtype=np.uint8))
-print(type(frames_mat))
+# print(frames)
+# import cv2
+# frames_mat = cv2.UMat(np.array(frames[0], dtype=np.uint8))
+# print(type(frames_mat))
 
 
-cv2.imshow(frames_mat)
-cv2.waitKey(10)
+# cv2.imshow(frames_mat)
+# cv2.waitKey(10)
 
 # video_output_path = "./vid_go2/"
 # os.makedirs(video_output_path, exist_ok=True)  # Create the directory if it doesn't exist
@@ -227,8 +227,8 @@ cv2.waitKey(10)
 
 
 
-# obs_size = env.observation_size
-# act_size = env.action_size
+obs_size = env.observation_size
+act_size = env.action_size
 
 
 # ppo_network = network_factory(obs_size, act_size)
