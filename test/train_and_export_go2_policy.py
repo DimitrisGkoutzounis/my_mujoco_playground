@@ -43,6 +43,66 @@ from tensorflow import keras
 
 output_path = f"go2_policy_{datetime.now().strftime('%Y%m%d_%H%M%S')}.onnx"
 
+import distutils.util
+import os
+import subprocess
+
+# if subprocess.run('nvidia-smi').returncode:
+#   raise RuntimeError(
+#       'Cannot communicate with GPU. '
+#       'Make sure you are using a GPU Colab runtime. '
+#       'Go to the Runtime menu and select Choose runtime type.'
+#   )
+
+# # Add an ICD config so that glvnd can pick up the Nvidia EGL driver.
+# # This is usually installed as part of an Nvidia driver package, but the Colab
+# # kernel doesn't install its driver via APT, and as a result the ICD is missing.
+# # (https://github.com/NVIDIA/libglvnd/blob/master/src/EGL/icd_enumeration.md)
+# NVIDIA_ICD_CONFIG_PATH = '/usr/share/glvnd/egl_vendor.d/10_nvidia.json'
+# if not os.path.exists(NVIDIA_ICD_CONFIG_PATH):
+#   with open(NVIDIA_ICD_CONFIG_PATH, 'w') as f:
+#     f.write("""{
+#     "file_format_version" : "1.0.0",
+#     "ICD" : {
+#         "library_path" : "libEGL_nvidia.so.0"
+#     }
+# }
+# """)
+
+# # Configure MuJoCo to use the EGL rendering backend (requires GPU)
+# print('Setting environment variable to use GPU rendering:')
+# os.environ["MUJOCO_GL"] = "egl"
+
+# try:
+#   print('Checking that the installation succeeded:')
+#   import mujoco
+
+#   mujoco.MjModel.from_xml_string('<mujoco/>')
+# except Exception as e:
+#   raise e from RuntimeError(
+#       'Something went wrong during installation. Check the shell output above '
+#       'for more information.\n'
+#       'If using a hosted Colab runtime, make sure you enable GPU acceleration '
+#       'by going to the Runtime menu and selecting "Choose runtime type".'
+#   )
+
+# print('Installation successful.')
+
+# # Tell XLA to use Triton GEMM, this improves steps/sec by ~30% on some GPUs
+# xla_flags = os.environ.get('XLA_FLAGS', '')
+# xla_flags += ' --xla_gpu_triton_gemm_any=True'
+# os.environ['XLA_FLAGS'] = xla_flags
+
+# os.environ["JAX_TRACEBACK_FILTERING"] = "off"
+
+# os.environ["TF_CPP_MIN_LOG_LEVEL"] = "0"
+# os.environ["XLA_FLAGS"] = "--xla_gpu_cuda_data_dir=/usr/local/cuda"
+
+os.environ["XLA_FLAGS"] = "--xla_gpu_cuda_data_dir=/usr/local/cuda"
+
+os.environ['XLA_PYTHON_CLIENT_PREALLOCATE'] = 'false'
+os.environ['XLA_PYTHON_CLIENT_MEM_FRACTION'] = '0.8'
+
 
 class MLP(tf.keras.Model):
     def __init__(
@@ -161,13 +221,23 @@ def transfer_weights(jax_params, tf_model):
 
 
 
+# # Tell XLA to use Triton GEMM, this improves steps/sec by ~30% on some GPUs
+# xla_flags = os.environ.get('XLA_FLAGS', '')
+# xla_flags += ' --xla_gpu_triton_gemm_any=True'
+# os.environ['XLA_FLAGS'] = xla_flags
+
 env_name = "Go2JoystickFlatTerrain"
 env_cfg = locomotion.get_default_config(env_name)
 # Change gait phase
 # env_cfg.command_config.a = [1.5, 0.8, 2 * jp.pi]  # Adjust for trot
+env_cfg.command_config.b = [0.9, 0.25, 0.8]  # Adjust for trot
+env_cfg.num_envs = 1000
+
 # env_cfg.pert_config.enable = True
 # env_cfg.pert_config.velocity_kick = [3.0, 6.0]
 # env_cfg.pert_config.kick_wait_times = [5.0, 15.0]
+
+
 
 
 env = locomotion.load(env_name, config=env_cfg)

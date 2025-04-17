@@ -71,3 +71,6 @@ class Locomotion_Controller:
       self._last_action = onnx_pred.copy()
       # HERE [:]
       data.ctrl[robot.i_start_ctrl:robot.i_end_ctrl] = onnx_pred * self._action_scale + self._default_angles
+      
+      
+      
