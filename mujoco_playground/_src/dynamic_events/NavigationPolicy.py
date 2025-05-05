@@ -150,7 +150,7 @@ class NavigationPolicy(go2_base.Go2NavEnv):
         
         self.Navigator_ = Navigator()
         
-        print("NavigationPolicy: Initialized")
+        print("NavigationPolicy(with Gen jax): Initialized")
 
     def get_action(self, model, data) -> np.ndarray:
         """Returns zero action (does nothing)."""
