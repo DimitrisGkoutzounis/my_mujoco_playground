@@ -96,7 +96,7 @@ class Balance(mjx_env.MjxEnv):
     self._mj_model.opt.timestep = self.sim_dt
     self._mjx_model = mjx.put_model(self._mj_model)
     self._post_init()
-
+  
     if self._vision:
       try:
         # pylint: disable=import-outside-toplevel
@@ -176,16 +176,23 @@ class Balance(mjx_env.MjxEnv):
     info = {"rng": rng}
 
     reward, done = jp.zeros(2)  # pylint: disable=redefined-outer-name
+    
+    print("LALA out")
 
     obs = self._get_obs(data, info)
     if self._vision:
+      print("LALA in vision true")
       render_token, rgb, _ = self.renderer.init(data, self._mjx_model)
       info.update({"render_token": render_token})
       obs = _rgba_to_grayscale(rgb[0].astype(jp.float32)) / 255.0
+      
       obs_history = jp.tile(obs, (self._config.vision_config.history, 1, 1))
       info.update({"obs_history": obs_history})
       obs = {"pixels/view_0": obs_history.transpose(1, 2, 0)}
 
+      # HERE
+      self.last_rgb = rgb[0].astype(jp.float32)
+      
     return mjx_env.State(data, obs, reward, done, metrics, info)
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
@@ -203,7 +210,12 @@ class Balance(mjx_env.MjxEnv):
       )
       state.info["obs_history"] = obs_history
       obs = {"pixels/view_0": obs_history.transpose(1, 2, 0)}
-
+      # HERE
+      self.last_rgb = rgb[0].astype(jp.float32)
+      print(self.last_rgb.shape)
+      print(type(self.last_rgb))
+      
+    print("Step, out of vision")  
     done = jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any()
     done = done.astype(float)
     return mjx_env.State(data, obs, reward, done, state.metrics, state.info)
