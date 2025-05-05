@@ -32,30 +32,41 @@ _ONNX_DIR = _HERE / "onnx"
 
 
 class KeyboardController:
-    def __init__(self, vel_scale_x=1.5, vel_scale_y=0.8, vel_scale_rot=2 * np.pi):
-        self.vel_scale_x = vel_scale_x
-        self.vel_scale_y = vel_scale_y
-        self.vel_scale_rot = vel_scale_rot
-        self.command = np.zeros(3)
+    def __init__(self,
+                 vel_scale_x=1.5,
+                 vel_scale_y=0.8,
+                 vel_scale_rot=2*np.pi,
+                 window_size=(300, 200),
+                 window_caption="Control Window"):
+       
+        pygame.init()
+        self.screen = pygame.display.set_mode(window_size)
+        pygame.display.set_caption(window_caption)
+        self.vel_scale_x    = vel_scale_x
+        self.vel_scale_y    = vel_scale_y
+        self.vel_scale_rot  = vel_scale_rot
+        self.command = np.zeros(3, dtype=np.float32)
 
     def get_command(self):
+        # process all pending SDL events—this MUST run every frame
+        for evt in pygame.event.get():
+            if evt.type == pygame.QUIT:
+                pygame.quit()
+                raise SystemExit
+
         keys = pygame.key.get_pressed()
-        self.command = np.zeros(3)  # Reset command
+        cmd = np.zeros(3, dtype=np.float32)
 
-        if keys[pygame.K_UP]:  # Forward
-            self.command[0] = self.vel_scale_x
-        if keys[pygame.K_s]:  # Backward
-            self.command[0] = -self.vel_scale_x
-        if keys[pygame.K_a]:  # Left
-            self.command[1] = self.vel_scale_y
-        if keys[pygame.K_d]:  # Right
-            self.command[1] = -self.vel_scale_y
-        if keys[pygame.K_q]:  # Rotate left
-            self.command[2] = self.vel_scale_rot
-        if keys[pygame.K_e]:  # Rotate right
-            self.command[2] = -self.vel_scale_rot
+        if keys[pygame.K_UP]:    cmd[0] =  self.vel_scale_x
+        if keys[pygame.K_DOWN]:  cmd[0] = -self.vel_scale_x
+        if keys[pygame.K_LEFT]:  cmd[1] =  self.vel_scale_y
+        if keys[pygame.K_RIGHT]: cmd[1] = -self.vel_scale_y
+        if keys[pygame.K_q]:     cmd[2] =  self.vel_scale_rot
+        if keys[pygame.K_e]:     cmd[2] = -self.vel_scale_rot
 
-        return self.command
+
+        return cmd
+
 
 
 class MyPolicy:
@@ -186,5 +197,5 @@ def load_callback(model=None, data=None):
 
 
 if __name__ == "__main__":
-  pygame.event.pump()
-  viewer.launch(loader=load_callback)
+    pygame.event.pump()
+    viewer.launch(loader=load_callback)
