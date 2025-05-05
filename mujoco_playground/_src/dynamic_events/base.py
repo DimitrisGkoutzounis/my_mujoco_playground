@@ -31,7 +31,7 @@ def get_assets() -> Dict[str, bytes]:
   assets = {}
   mjx_env.update_assets(assets, consts.ROOT_PATH / "arm_mujoco/xml", "*.xml")
   mjx_env.update_assets(assets, consts.ROOT_PATH / "arm_mujoco/xml/robots/its_all_a_mesh" / "assets")
-  path = consts.ROOT_PATH / "arm_mujoco/xml" #mjx_env.MENAGERIE_PATH / "unitree_go2"
+  path = consts.ROOT_PATH / "src/arm_mujoco/xml" #mjx_env.MENAGERIE_PATH / "unitree_go2"
   mjx_env.update_assets(assets, path, "*.xml")
   mjx_env.update_assets(assets, path / "robots/its_all_a_mesh/assets")
   return assets
